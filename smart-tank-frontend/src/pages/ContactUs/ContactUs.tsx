@@ -1,11 +1,14 @@
-import React from 'react'
+import React from "react";
+import SmartNavbar from "../../shared/components/organisms/smartNavbar";
+import SmartFooter from "../../shared/components/organisms/smartFooter/SmartFooter";
 
 const ContactUs = () => {
   return (
-    <div>
-      
-    </div>
-  )
-}
+    <>
+      <SmartNavbar />
+      <SmartFooter />
+    </>
+  );
+};
 
-export default ContactUs
+export default ContactUs;
