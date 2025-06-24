@@ -1,6 +1,5 @@
-import React from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Box, Typography, IconButton, Grid } from "@mui/material";
+import { Box, Typography, IconButton } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { fishProfiles } from "../../Data/fish.data";
 import { aquariums } from "../../Data/aquarium.data";
@@ -81,23 +80,23 @@ const FishDetailsPage = () => {
                 Aquariums Near You
               </Typography>
               <Typography variant="body2">
-                Aquariums near you where you can buy “{fish.name}”
+                Aquariums near you where you can buy "{fish.name}"
               </Typography>
             </Box>
           </Box>
 
-          <Grid container spacing={2}>
+          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2 }}>
             {aquariums.slice(0, 5).map((store) => (
-              <Grid item key={store.id}>
+              <Box key={store.id}>
                 <SmartStoreCard
                   id={store.id}
                   imageSrc={store.bannerImage}
                   title={store.name}
                   location={store.address}
                 />
-              </Grid>
+              </Box>
             ))}
-          </Grid>
+          </Box>
         </Box>
       </Box>
 
