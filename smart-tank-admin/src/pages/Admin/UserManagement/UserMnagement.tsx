@@ -3,11 +3,11 @@ import AddIcon from "@mui/icons-material/Add";
 import { useEffect, useState } from "react";
 import UserTable from "../../../components/admin/UserTable";
 import UserFormDialog from "../../../components/admin/UserFormDialog";
-import { getAllUsers } from "../../../services/userServuce";
+import { getAllUsers } from "../../../services/userService";
 import type { User } from "../../../types/User";
 
 const UserManagement = () => {
-  const [users, setUsers] = useState([]);
+  const [users, setUsers] = useState<User[]>([]);
   const [openForm, setOpenForm] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
 

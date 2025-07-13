@@ -9,7 +9,7 @@ import {
   Box,
 } from "@mui/material";
 import { useState, useEffect } from "react";
-import { saveUser } from "../../services/userServuce";
+import { saveUser } from "../../services/userService";
 
 type User = {
   fullName: string;

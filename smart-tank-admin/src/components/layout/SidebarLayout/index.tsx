@@ -24,18 +24,19 @@ import {
 } from "@mui/icons-material";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useState } from "react";
-import type { FC } from "react";
 
 interface SidebarLayoutProps {
   collapsed: boolean;
 }
 
-const SidebarLayout: FC<SidebarLayoutProps> = ({ collapsed }) => {
+const SidebarLayout = ({ collapsed }: SidebarLayoutProps) => {
   const [adminOpen, setAdminOpen] = useState(true);
   const navigate = useNavigate();
   const location = useLocation();
 
-  const isActive = (path: string) => location.pathname.includes(path);
+  // ✅ Use strict or startsWith matching to avoid overlaps
+  const isActive = (path: string) =>
+    location.pathname === path || location.pathname.startsWith(`${path}/`);
 
   const menuItems = [
     { label: "Dashboard", icon: <Dashboard />, path: "/dashboard" },
@@ -90,12 +91,13 @@ const SidebarLayout: FC<SidebarLayoutProps> = ({ collapsed }) => {
             <Box key={index}>
               <ListItemButton
                 onClick={() => setAdminOpen(!adminOpen)}
-                selected={isActive("/admin")}
+                selected={item.children.some((child) => isActive(child.path))}
               >
                 <ListItemIcon>{item.icon}</ListItemIcon>
                 {!collapsed && <ListItemText primary={item.label} />}
                 {!collapsed && (adminOpen ? <ExpandLess /> : <ExpandMore />)}
               </ListItemButton>
+
               <Collapse in={adminOpen}>
                 {item.children.map((child, i) => (
                   <ListItemButton

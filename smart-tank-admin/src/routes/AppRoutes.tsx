@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Login from "../pages/Login/Login";
 import Dashboard from "../pages/Dashboard/Dashboard";
 import UserManagement from "../pages/Admin/UserManagement/UserMnagement";
+import Users from "../pages/Users/Users";
 import ProtectedLayout from "../layout/ProtectedLayout";
 
 const isAuthenticated = () => {
@@ -15,9 +16,10 @@ const PrivateRoute = ({ children }: { children: React.ReactNode }) =>
 const AppRoutes = () => (
   <BrowserRouter>
     <Routes>
+      {/* Public */}
       <Route path="/login" element={<Login />} />
 
-      {/* All protected pages go here */}
+      {/* Protected */}
       <Route
         path="/dashboard"
         element={
@@ -38,7 +40,18 @@ const AppRoutes = () => (
           </PrivateRoute>
         }
       />
+      <Route
+        path="/user"
+        element={
+          <PrivateRoute>
+            <ProtectedLayout>
+              <Users />
+            </ProtectedLayout>
+          </PrivateRoute>
+        }
+      />
 
+      {/* Catch-all fallback */}
       <Route
         path="*"
         element={
