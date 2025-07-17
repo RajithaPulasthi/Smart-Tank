@@ -3,85 +3,111 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  Button,
   TextField,
   MenuItem,
+  Button,
   Box,
 } from "@mui/material";
 import { useState, useEffect } from "react";
+// Import both saveUser and saveAdminUser
 import { saveUser } from "../../services/userService";
-
-type User = {
-  fullName: string;
-  email: string;
-  userName: string;
-  status: string;
-  authorities: { authority: string }[];
-};
+import type { User } from "../../types/User"; // Ensure this path is correct for your updated User type
 
 type Props = {
   open: boolean;
   onClose: () => void;
   user: User | null;
-  onSave: () => void;
+  onSave: (user: User) => void;
 };
 
-const roleOptions = [
-  { value: "ROLE_AQUARIUM_ADMIN", label: "Admin" },
-  { value: "ROLE_SUPER_ADMIN", label: "Super Admin" },
-  { value: "ROLE_USER", label: "User" },
+const statusOptions = [
+  { label: "Active", value: 1 },
+  { label: "Inactive", value: 0 },
 ];
 
 const UserFormDialog = ({ open, onClose, user, onSave }: Props) => {
   const [form, setForm] = useState<User>({
-    fullName: "",
+    id: 0,
+    firstName: "",
+    lastName: "",
     email: "",
     userName: "",
-    status: "active",
-    authorities: [{ authority: "ROLE_USER" }],
+    password: "",
+    address: "",
+    status: 1,
+    userType: 1,
   });
 
   useEffect(() => {
-    if (user) setForm({ ...user });
-    else
+    if (user) {
       setForm({
-        fullName: "",
+        ...user,
+        status:
+          typeof user.status === "string"
+            ? user.status === "Active"
+              ? 1
+              : 0
+            : user.status,
+        userType: user.userType ?? 1,
+      });
+    } else {
+      setForm({
+        id: 0,
+        firstName: "",
+        lastName: "",
         email: "",
         userName: "",
-        status: "active",
-        authorities: [{ authority: "ROLE_USER" }],
+        password: "",
+        address: "",
+        status: 1,
+        userType: 1,
       });
+    }
   }, [user]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    if (name === "authority") {
-      setForm({ ...form, authorities: [{ authority: value }] });
+    if (name === "status" || name === "userType") {
+      setForm({ ...form, [name]: Number(value) });
     } else {
       setForm({ ...form, [name]: value });
     }
   };
 
   const handleSubmit = async () => {
-    const token = localStorage.getItem("token")!;
-    const success = await saveUser(form, token);
+    const token = localStorage.getItem("token");
+    if (!token) return;
+    const payload: Partial<User> = {
+      ...form,
+      status: form.status,
+      userType: form.userType,
+    };
+    if (user && !form.password) {
+      // Only delete if password is present and optional
+      (payload as Partial<User>).password = undefined;
+    }
+    const success = await saveUser(payload as User, token);
     if (success) {
-      onSave();
+      onSave(payload as User);
       onClose();
-    } else {
-      alert("Failed to save user");
     }
   };
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
-      <DialogTitle>{user ? "Edit User" : "Add New User"}</DialogTitle>
+      <DialogTitle>{user ? "Edit Admin User" : "Add New User"}</DialogTitle>
       <DialogContent>
         <Box display="flex" flexDirection="column" gap={2} mt={1}>
           <TextField
-            label="Full Name"
-            name="fullName"
-            value={form.fullName}
+            label="First Name"
+            name="firstName"
+            value={form.firstName}
+            onChange={handleChange}
+          />
+          <TextField
+            label="Last Name"
+            name="lastName"
+            value={form.lastName}
             onChange={handleChange}
           />
           <TextField
@@ -96,36 +122,49 @@ const UserFormDialog = ({ open, onClose, user, onSave }: Props) => {
             value={form.userName}
             onChange={handleChange}
           />
+          {(!user || !user.id) && (
+            <TextField
+              label="Password"
+              name="password"
+              type="password"
+              value={form.password}
+              onChange={handleChange}
+            />
+          )}
+          <TextField
+            label="Address"
+            name="address"
+            value={form.address}
+            onChange={handleChange}
+          />
           <TextField
             select
-            label="Account Status"
+            label="Status"
             name="status"
             value={form.status}
             onChange={handleChange}
           >
-            <MenuItem value="active">Active</MenuItem>
-            <MenuItem value="suspended">Suspended</MenuItem>
-          </TextField>
-          <TextField
-            select
-            label="Role"
-            name="authority"
-            value={form.authorities?.[0]?.authority}
-            onChange={handleChange}
-          >
-            {roleOptions.map((opt) => (
+            {statusOptions.map((opt) => (
               <MenuItem key={opt.value} value={opt.value}>
                 {opt.label}
               </MenuItem>
             ))}
           </TextField>
+          <TextField
+            select
+            label="User Type"
+            name="userType"
+            value={form.userType}
+            onChange={handleChange}
+          >
+            <MenuItem value={1}>Admin</MenuItem>
+            <MenuItem value={0}>User</MenuItem>
+          </TextField>
         </Box>
       </DialogContent>
       <DialogActions>
-        <Button variant="outlined" onClick={onClose}>
-          Cancel
-        </Button>
-        <Button variant="contained" onClick={handleSubmit}>
+        <Button onClick={onClose}>Cancel</Button>
+        <Button onClick={handleSubmit} variant="contained">
           Save
         </Button>
       </DialogActions>

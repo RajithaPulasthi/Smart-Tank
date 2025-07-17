@@ -3,6 +3,7 @@ import Login from "../pages/Login/Login";
 import Dashboard from "../pages/Dashboard/Dashboard";
 import UserManagement from "../pages/Admin/UserManagement/UserMnagement";
 import Users from "../pages/Users/Users";
+import Profile from "../pages/Profile/Profile";
 import ProtectedLayout from "../layout/ProtectedLayout";
 
 const isAuthenticated = () => {
@@ -46,6 +47,16 @@ const AppRoutes = () => (
           <PrivateRoute>
             <ProtectedLayout>
               <Users />
+            </ProtectedLayout>
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/profile"
+        element={
+          <PrivateRoute>
+            <ProtectedLayout>
+              <Profile />
             </ProtectedLayout>
           </PrivateRoute>
         }

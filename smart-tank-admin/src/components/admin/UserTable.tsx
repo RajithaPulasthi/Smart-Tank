@@ -11,27 +11,20 @@ import {
   Avatar,
   Typography,
   Tooltip,
+  Button,
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import StatusChip from "./StatusChip";
-import { RoleChip } from "./RoleSelect";
-
-type User = {
-  fullName: string;
-  email: string;
-  userName: string;
-  status: string;
-  authorities: { authority: string }[];
-  address?: string;
-};
+import type { User } from "../../types/User";
 
 type UserTableProps = {
   users: User[];
-  onEdit: (user: User) => void;
+  onEdit: (user?: User | null) => void;
+  onDeactivate: (user: User) => void;
   refresh: () => void;
 };
 
-const UserTable = ({ users, onEdit }: UserTableProps) => {
+const UserTable = ({ users, onEdit, onDeactivate }: UserTableProps) => {
   return (
     <TableContainer component={Paper} sx={{ borderRadius: 2 }}>
       <Table>
@@ -52,27 +45,49 @@ const UserTable = ({ users, onEdit }: UserTableProps) => {
               <TableCell>
                 <Box display="flex" alignItems="center" gap={1.5}>
                   <Avatar />
-                  <Typography>{user.fullName || user.userName}</Typography>
+                  <Typography>
+                    {user.firstName && user.lastName
+                      ? `${user.firstName} ${user.lastName}`
+                      : user.userName}
+                  </Typography>
                 </Box>
               </TableCell>
+
               <TableCell>{user.email || "—"}</TableCell>
+
               <TableCell>
                 <Typography>📍 {user.address || "Colombo"}</Typography>
               </TableCell>
+
               <TableCell>
-                <StatusChip status={user.status || "active"} />
+                <StatusChip status={String(user.status) || "active"} />
               </TableCell>
+
               <TableCell>
-                <RoleChip
-                  authority={user.authorities?.[0]?.authority || "USER"}
-                />
+                <Typography>
+                  {user.userType === 1 ? "Admin" : "User"}
+                </Typography>
               </TableCell>
+
               <TableCell align="center">
                 <Tooltip title="Edit">
                   <IconButton onClick={() => onEdit(user)}>
                     <EditIcon />
                   </IconButton>
                 </Tooltip>
+
+                {user.status === 1 && (
+                  <Tooltip title="Deactivate">
+                    <Button
+                      color="warning"
+                      size="small"
+                      onClick={() => onDeactivate(user)}
+                      sx={{ ml: 1 }}
+                    >
+                      Deactivate
+                    </Button>
+                  </Tooltip>
+                )}
               </TableCell>
             </TableRow>
           ))}

@@ -11,7 +11,7 @@ import {
   Avatar,
   Chip,
 } from "@mui/material";
-import type { Customer } from "../../types/Customers";
+import type { Customer } from "../../types/Customer";
 
 type Props = {
   users: Customer[];
