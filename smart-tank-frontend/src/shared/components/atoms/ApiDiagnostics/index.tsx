@@ -8,7 +8,6 @@ import {
   Chip,
 } from "@mui/material";
 import { useState } from "react";
-import { getGoogleMapsState } from "../../../utils/googleMapsLoader";
 
 interface ApiDiagnosticsProps {
   apiKey: string;
