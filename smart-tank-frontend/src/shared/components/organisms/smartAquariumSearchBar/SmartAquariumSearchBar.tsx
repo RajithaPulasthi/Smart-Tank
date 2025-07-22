@@ -21,27 +21,42 @@ const SmartAquariumSearchBar = ({
           onSubmit();
         }}
         sx={{
+          p: "4px 8px",
           display: "flex",
           alignItems: "center",
-          borderRadius: 5,
-          width: { xs: "100%", sm: 400 },
-          backgroundColor: "#00aaff",
-          boxShadow: "0 2px 8px rgba(0, 0, 0, 0.15)",
+          borderRadius: "50px", // Fully rounded ends
+          width: { xs: "90%", sm: 500, md: 600 }, // Responsive width
+          background: "rgba(255, 255, 255, 0.1)", // Glassmorphism background
+          backdropFilter: "blur(10px)",
+          border: "1px solid rgba(255, 255, 255, 0.2)",
+          boxShadow: "0 8px 32px 0 rgba(0, 0, 0, 0.15)",
+          transition: "all 0.3s ease",
+          "&:hover": {
+            background: "rgba(255, 255, 255, 0.2)",
+            boxShadow: "0 8px 32px 0 rgba(0, 0, 0, 0.25)",
+          },
         }}
       >
         <InputBase
-          sx={{ ml: 2, flex: 1, color: "#fff" }}
+          sx={{ ml: 2, flex: 1, color: "text.primary", fontSize: "1.1rem" }}
           placeholder={placeholder}
           value={value}
           onChange={(e) => onChange(e.target.value)}
           inputProps={{
             "aria-label": "search field",
-            style: { color: "#fff", fontWeight: 500 },
+            style: { fontWeight: 500 },
           }}
         />
         <IconButton
           type="submit"
-          sx={{ p: 1, color: "white", "&:hover": { color: "#e0f7ff" } }}
+          sx={{
+            p: "12px",
+            background: "linear-gradient(45deg, #00c0ff, #0077ff)",
+            color: "white",
+            "&:hover": {
+              background: "linear-gradient(45deg, #0077ff, #004aad)",
+            },
+          }}
           aria-label="search"
         >
           <SearchIcon />

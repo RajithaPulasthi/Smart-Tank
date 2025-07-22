@@ -12,7 +12,12 @@ import SmartFooter from "../../shared/components/organisms/smartFooter/SmartFoot
 
 const Home = () => {
   return (
-    <Box>
+    <Box
+      sx={{
+        minHeight: "100vh",
+        background: "linear-gradient(to bottom, #f8fafc 0%, #e2e8f0 100%)",
+      }}
+    >
       <SmartNavbar />
       <SmartHeroSection />
       <SmartHowItWorksSection />

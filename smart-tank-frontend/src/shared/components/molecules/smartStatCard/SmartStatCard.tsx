@@ -1,36 +1,44 @@
-import { Box, Typography } from '@mui/material';
-import { useCounter } from '../../../hooks/useCounter';
+import { Box, Typography, Paper } from "@mui/material";
+import { useCounter } from "../../../hooks/useCounter";
 
 export interface SmartStatCardProps {
-    targetNumber: number;
-    label: string;
-    bgColor: string;
-    isCenter?: boolean;
-  }
-  
-const SmartStatCard = ({ targetNumber, label, bgColor, isCenter }: SmartStatCardProps) => {
-  const count = useCounter(targetNumber, 1500);
+  targetNumber: number;
+  label: string;
+  icon: React.ReactElement;
+}
+
+const SmartStatCard = ({ targetNumber, label, icon }: SmartStatCardProps) => {
+  const count = useCounter(targetNumber, 2000);
 
   return (
-    <Box
+    <Paper
+      elevation={0}
       sx={{
         flex: 1,
-        py: 4,
-        backgroundColor: bgColor,
-        color: isCenter ? 'black' : 'white',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
+        p: 3,
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        textAlign: "center",
+        background: "rgba(255, 255, 255, 0.05)",
+        backdropFilter: "blur(10px)",
+        border: "1px solid rgba(255, 255, 255, 0.2)",
+        color: "white",
+        borderRadius: 4,
+        minWidth: 200,
       }}
     >
-      <Typography variant="h4" fontWeight="bold">
+      <Box sx={{ fontSize: 48, lineHeight: 1, mb: 1.5, color: "#64ffda" }}>
+        {icon}
+      </Box>
+      <Typography variant="h3" fontWeight="700" component="p">
         {count}+
       </Typography>
-      <Typography variant="subtitle1" fontWeight={isCenter ? 500 : 400}>
+      <Typography variant="body1" sx={{ opacity: 0.8 }}>
         {label}
       </Typography>
-    </Box>
+    </Paper>
   );
 };
 

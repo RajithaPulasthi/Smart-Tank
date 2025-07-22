@@ -1,6 +1,7 @@
-import { Box, Typography, TextField } from "@mui/material";
+import { Box, Typography, Container, Paper } from "@mui/material";
 import SmartButton from "../../atoms/SmartButtons";
 import { useState } from "react";
+import SmartTextInput from "../../atoms/smartTextInput";
 
 const SmartNewsletterSection = () => {
   const [email, setEmail] = useState("");
@@ -8,6 +9,7 @@ const SmartNewsletterSection = () => {
   const handleSubscribe = () => {
     if (email) {
       console.log("Subscribed with:", email);
+      // Here you would typically call an API
       setEmail("");
     }
   };
@@ -15,64 +17,86 @@ const SmartNewsletterSection = () => {
   return (
     <Box
       sx={{
-        py: 6,
-        px: 2,
-        backgroundColor: "#f2fcff",
-        textAlign: "center",
+        py: { xs: 6, md: 10 },
+        background: "linear-gradient(180deg, #040d1c 0%, #0c2a4d 100%)",
+        color: "white",
       }}
     >
-      <Typography variant="h5" fontWeight="bold" sx={{ mb: 3 }}>
-        Stay Updated on Fish Trends & Tips
-      </Typography>
-
-      {/* Input + Button Row */}
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "center",
-          gap: 1,
-          mb: 2,
-          flexWrap: "wrap",
-        }}
-      >
-        <TextField
-          variant="outlined"
-          placeholder="Enter your email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
+      <Container maxWidth="md">
+        <Paper
           sx={{
-            backgroundColor: "#00aaff",
-            borderRadius: "8px",
-            input: { color: "white" },
-            "& .MuiOutlinedInput-root": {
-              "& fieldset": {
-                border: "none",
-              },
-              "&:hover fieldset": {
-                border: "none",
-              },
-              "&.Mui-focused fieldset": {
-                border: "none",
-              },
-            },
-            width: 250,
+            p: { xs: 3, sm: 5 },
+            textAlign: "center",
+            background: "rgba(10, 25, 47, 0.5)",
+            backdropFilter: "blur(10px)",
+            border: "1px solid rgba(255, 255, 255, 0.1)",
+            borderRadius: 4,
+            boxShadow: "0 16px 40px rgba(0,0,0,0.3)",
           }}
-          inputProps={{
-            style: { padding: "10px 14px" },
-          }}
-        />
+        >
+          <Typography
+            variant="h4"
+            component="h2"
+            fontWeight="700"
+            sx={{ mb: 1.5 }}
+          >
+            Join Our Aquatic Community
+          </Typography>
+          <Typography
+            variant="h6"
+            sx={{ mb: 4, opacity: 0.8, fontWeight: 400 }}
+          >
+            Get exclusive updates, fish care tips, and special offers delivered
+            right to your inbox.
+          </Typography>
 
-        <SmartButton
-          text="Subscribe"
-          type="button"
-          variant="contained"
-          onClick={handleSubscribe}
-        />
-      </Box>
+          <Box
+            component="form"
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleSubscribe();
+            }}
+            sx={{
+              display: "flex",
+              flexDirection: { xs: "column", sm: "row" },
+              justifyContent: "center",
+              gap: 2,
+              mb: 2,
+              maxWidth: 500,
+              mx: "auto",
+            }}
+          >
+            <SmartTextInput
+              label="Your Email Address"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              fullWidth
+              required
+            />
+            <SmartButton
+              text="Subscribe"
+              type="submit"
+              onClick={() => {}}
+              sx={{
+                py: 1.5,
+                px: 4,
+                fontSize: "1rem",
+                fontWeight: 600,
+                flexShrink: 0,
+                background: "linear-gradient(45deg, #00c0ff, #0077ff)",
+                "&:hover": {
+                  background: "linear-gradient(45deg, #0077ff, #004aad)",
+                },
+              }}
+            />
+          </Box>
 
-      <Typography variant="body2" fontWeight={500}>
-        We respect your privacy. Unsubscribe at any time.
-      </Typography>
+          <Typography variant="body2" sx={{ opacity: 0.7 }}>
+            We respect your privacy. Unsubscribe at any time.
+          </Typography>
+        </Paper>
+      </Container>
     </Box>
   );
 };

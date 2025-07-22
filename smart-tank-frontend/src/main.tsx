@@ -12,6 +12,9 @@ import ContactUs from "./pages/ContactUs/ContactUs";
 import AquariumSinglePage from "./pages/AquariumSinglePage/AquariumSinglePage";
 import FishDetailsPage from "./pages/FishDetailsPage/FishDetailsPage";
 import RegisterAquarium from "./pages/RegisterAquarium/RegisterAquarium";
+import SignIn from "./pages/SignIn/SignIn";
+import SignUp from "./pages/SignUp/SignUp";
+import Profile from "./pages/Profile/Profile";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
@@ -26,6 +29,9 @@ createRoot(document.getElementById("root")!).render(
         <Route path="/aquarium/:id" element={<AquariumSinglePage />} />
         <Route path="/fish/:id" element={<FishDetailsPage />} />
         <Route path="/RegisterAquarium" element={<RegisterAquarium />} />
+        <Route path="/signin" element={<SignIn />} />
+        <Route path="/signup" element={<SignUp />} />
+        <Route path="/profile" element={<Profile />} />
       </Routes>
     </BrowserRouter>
   </StrictMode>

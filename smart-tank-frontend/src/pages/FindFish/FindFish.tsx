@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { Box, Typography } from "@mui/material";
+import { useState } from "react";
+import { Box, Typography, Container } from "@mui/material";
 import SmartNavbar from "../../shared/components/organisms/smartNavbar";
 import SmartFooter from "../../shared/components/organisms/smartFooter/SmartFooter";
 import SmartAquariumSearchBar from "../../shared/components/organisms/smartAquariumSearchBar/SmartAquariumSearchBar";
@@ -21,9 +21,32 @@ const FindFish = () => {
   };
 
   return (
-    <>
+    <Box
+      sx={{
+        background:
+          "linear-gradient(to bottom, #051937, #004d7a, #008793, #00bf72, #a8eb12)",
+        minHeight: "100vh",
+      }}
+    >
       <SmartNavbar />
-      <Box sx={{ px: 4, pt: 5, pb: 3 }}>
+      <Container maxWidth="lg" sx={{ py: 4 }}>
+        <Box sx={{ textAlign: "center", my: 4 }}>
+          <Typography
+            variant="h3"
+            component="h1"
+            fontWeight="bold"
+            sx={{ color: "white", textShadow: "2px 2px 8px rgba(0,0,0,0.6)" }}
+          >
+            Find Your Next Aquatic Pet
+          </Typography>
+          <Typography
+            variant="h6"
+            sx={{ color: "rgba(255,255,255,0.8)", mt: 1 }}
+          >
+            Search our extensive database of fish and local aquarium stores.
+          </Typography>
+        </Box>
+
         <SmartAquariumSearchBar
           placeholder="Enter a fish name"
           value={searchTerm}
@@ -33,11 +56,22 @@ const FindFish = () => {
 
         {/* Show results when searched */}
         {results.length > 0 && (
-          <>
-            <Typography sx={{ mt: 4, mb: 2 }} fontWeight={500}>
+          <Box sx={{ my: 4 }}>
+            <Typography
+              variant="h5"
+              fontWeight="bold"
+              sx={{ color: "white", mb: 2 }}
+            >
               {results.length} results for "{searchTerm}"
             </Typography>
-            <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", mb: 4 }}>
+            <Box
+              sx={{
+                display: "flex",
+                gap: 3,
+                flexWrap: "wrap",
+                justifyContent: "center",
+              }}
+            >
               {results.map((fish) => (
                 <SmartFishCard
                   key={fish.id}
@@ -48,12 +82,12 @@ const FindFish = () => {
                 />
               ))}
             </Box>
-          </>
+          </Box>
         )}
 
         {/* Static Scroll Sections */}
         <SmartHorizontalScrollSection<(typeof fishProfiles)[0]>
-          title="Local Fish List"
+          title="Featured Fish"
           items={fishProfiles.slice(0, 5)}
           renderItem={(fish) => (
             <SmartFishCard
@@ -67,7 +101,7 @@ const FindFish = () => {
         />
 
         <SmartHorizontalScrollSection
-          title="Most Popular Pet Fish"
+          title="Most Popular Choices"
           items={fishProfiles.slice(1, 6)}
           renderItem={(fish) => (
             <SmartFishCard
@@ -79,25 +113,24 @@ const FindFish = () => {
             />
           )}
         />
-      </Box>
 
-      {/* Reuse Aquarium Scroll Section */}
-      <SmartHorizontalScrollSection
-        title="Featured Local Aquariums"
-        items={aquariums.slice(0, 5)}
-        renderItem={(store) => (
-          <SmartStoreCard
-            key={store.id}
-            id={store.id}
-            imageSrc={store.bannerImage}
-            title={store.name}
-            location={store.address}
-          />
-        )}
-      />
-
+        {/* Reuse Aquarium Scroll Section */}
+        <SmartHorizontalScrollSection
+          title="Featured Local Aquariums"
+          items={aquariums.slice(0, 5)}
+          renderItem={(store) => (
+            <SmartStoreCard
+              key={store.id}
+              id={store.id}
+              imageSrc={store.bannerImage}
+              title={store.name}
+              location={store.address}
+            />
+          )}
+        />
+      </Container>
       <SmartFooter />
-    </>
+    </Box>
   );
 };
 

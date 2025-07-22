@@ -13,6 +13,8 @@ import Button from "@mui/material/Button";
 import Tooltip from "@mui/material/Tooltip";
 import MenuItem from "@mui/material/MenuItem";
 import SmartTankLogo from "../../../../assets/SmartTankLogo.png";
+import AuthService from "../../../../services/authService";
+import SmartButton from "../../atoms/SmartButtons";
 
 const pages = [
   { label: "Home", path: "/" },
@@ -22,11 +24,15 @@ const pages = [
   { label: "Water Condition", path: "/water-condition" },
   { label: "Contact Us", path: "/contactUs" },
 ];
-const settings = ["Profile", "Logout"];
 
 function SmartNavbar() {
   const navigate = useNavigate();
   const location = useLocation();
+  const [isAuthenticated, setIsAuthenticated] = React.useState(false);
+  const [user, setUser] = React.useState<{
+    fullName: string;
+    userName: string;
+  } | null>(null);
 
   const [anchorElNav, setAnchorElNav] = React.useState<null | HTMLElement>(
     null
@@ -34,6 +40,24 @@ function SmartNavbar() {
   const [anchorElUser, setAnchorElUser] = React.useState<null | HTMLElement>(
     null
   );
+
+  // Check authentication status on component mount and route changes
+  React.useEffect(() => {
+    const checkAuth = () => {
+      const authenticated = AuthService.isAuthenticated();
+      const userData = AuthService.getUser();
+      setIsAuthenticated(authenticated);
+      setUser(userData);
+    };
+
+    checkAuth();
+    // Listen for storage changes (when user logs in from another tab)
+    window.addEventListener("storage", checkAuth);
+
+    return () => {
+      window.removeEventListener("storage", checkAuth);
+    };
+  }, [location]);
 
   const handleOpenNavMenu = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorElNav(event.currentTarget);
@@ -54,32 +78,54 @@ function SmartNavbar() {
     navigate("/");
   };
 
+  const handleLogin = () => {
+    navigate("/signin");
+  };
+
+  const handleLogout = () => {
+    AuthService.logout();
+    setIsAuthenticated(false);
+    setUser(null);
+    handleCloseUserMenu();
+    navigate("/");
+  };
+
+  const handleProfile = () => {
+    handleCloseUserMenu();
+    navigate("/profile");
+  };
+
   return (
     <AppBar
-      position="static"
+      position="sticky"
       sx={{
-        backgroundColor: "#0043A6",
-        boxShadow: "0 4px 12px rgba(0,0,0,0.2)",
+        // Dark, modern background
+        background: "linear-gradient(135deg, #1F2937 0%, #111827 100%)",
+        boxShadow: "0 4px 12px rgba(0,0,0,0.25)",
+        // Ensure text color is light for the dark background
+        color: "white",
       }}
     >
       <Container maxWidth="xl">
         <Toolbar disableGutters>
-          <img
+          <Box
+            component="img"
             src={SmartTankLogo}
             alt="Smart Tank Logo"
-            style={{
-              width: "150px",
+            sx={{
+              width: { xs: 100, md: 150 },
               cursor: "pointer",
-              marginRight: "24px",
-              marginLeft: "100px",
+              mr: { xs: 1, md: 3 },
+              // Since the logo is white, no filter is needed on a dark background
             }}
             onClick={handleLogoClick}
           />
 
+          {/* Mobile Menu */}
           <Box sx={{ flexGrow: 1, display: { xs: "flex", md: "none" } }}>
             <IconButton
               size="large"
-              aria-label="account of current user"
+              aria-label="navigation menu"
               aria-controls="menu-appbar"
               aria-haspopup="true"
               onClick={handleOpenNavMenu}
@@ -95,7 +141,15 @@ function SmartNavbar() {
               transformOrigin={{ vertical: "top", horizontal: "left" }}
               open={Boolean(anchorElNav)}
               onClose={handleCloseNavMenu}
-              sx={{ display: { xs: "block", md: "none" } }}
+              sx={{
+                display: { xs: "block", md: "none" },
+                "& .MuiPaper-root": {
+                  background: "rgba(31, 41, 55, 0.9)", // Dark glassmorphism
+                  backdropFilter: "blur(10px)",
+                  borderRadius: "10px",
+                  color: "white",
+                },
+              }}
             >
               {pages.map((page) => (
                 <MenuItem
@@ -104,72 +158,99 @@ function SmartNavbar() {
                     handleCloseNavMenu();
                     navigate(page.path);
                   }}
+                  sx={{
+                    fontWeight:
+                      location.pathname === page.path ? "bold" : "normal",
+                    color:
+                      location.pathname === page.path
+                        ? "primary.light"
+                        : "inherit",
+                  }}
                 >
-                  <Typography
-                    textAlign="center"
-                    fontWeight={location.pathname === page.path ? 700 : 500}
-                    color={
-                      location.pathname === page.path ? "#1976d2" : "inherit"
-                    }
-                  >
-                    {page.label}
-                  </Typography>
+                  <Typography textAlign="center">{page.label}</Typography>
                 </MenuItem>
               ))}
             </Menu>
           </Box>
 
-          <Box sx={{ flexGrow: 1, display: { xs: "none", md: "flex" } }}>
-            {pages.map((page) => {
-              const isActive = location.pathname === page.path;
-              return (
-                <Button
-                  key={page.label}
-                  onClick={() => {
-                    handleCloseNavMenu();
-                    navigate(page.path);
-                  }}
-                  sx={{
-                    my: 2,
-                    mx: 1,
-                    color: isActive ? "#FBFD0FF" : "white",
-                    fontWeight: isActive ? 700 : 600,
-                    fontSize: "1rem",
-                    borderBottom: isActive ? "2px solid #FBFD0FF" : "none",
-                    borderRadius: 0,
-                    "&:hover": {
-                      color: "#FBFD0FF",
-                    },
-                  }}
-                >
-                  {page.label}
-                </Button>
-              );
-            })}
+          {/* Desktop Menu */}
+          <Box
+            sx={{
+              flexGrow: 1,
+              display: { xs: "none", md: "flex" },
+              justifyContent: "center",
+            }}
+          >
+            {pages.map((page) => (
+              <Button
+                key={page.label}
+                onClick={() => navigate(page.path)}
+                sx={{
+                  my: 2,
+                  color:
+                    location.pathname === page.path ? "primary.light" : "white",
+                  display: "block",
+                  fontWeight: location.pathname === page.path ? 700 : 500,
+                  position: "relative",
+                  "&:after": {
+                    content: '""',
+                    position: "absolute",
+                    width: "0%",
+                    height: "2px",
+                    bottom: "-5px",
+                    left: "50%",
+                    transform: "translateX(-50%)",
+                    backgroundColor: "primary.light",
+                    transition: "width 0.3s ease-in-out",
+                    ...(location.pathname === page.path && { width: "70%" }),
+                  },
+                  "&:hover:after": {
+                    width: "70%",
+                  },
+                }}
+              >
+                {page.label}
+              </Button>
+            ))}
           </Box>
 
-          {/* Avatar / User Menu */}
+          {/* User/Auth Section */}
           <Box sx={{ flexGrow: 0 }}>
-            <Tooltip title="Open settings">
-              <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
-                <Avatar
-                  alt="User"
-                  src="/static/images/avatar/2.jpg"
-                  sx={{
-                    width: 40,
-                    height: 40,
-                    border: "2px solid white",
-                    transition: "transform 0.2s",
-                    "&:hover": {
-                      transform: "scale(1.1)",
-                    },
-                  }}
-                />
-              </IconButton>
-            </Tooltip>
+            {isAuthenticated && user ? (
+              <Tooltip title="Open settings">
+                <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
+                  <Avatar
+                    alt={user.fullName}
+                    src="/static/images/avatar/2.jpg"
+                  />
+                </IconButton>
+              </Tooltip>
+            ) : (
+              <SmartButton
+                text="Login"
+                type="button"
+                onClick={handleLogin}
+                variant="contained"
+                sx={{
+                  background:
+                    "linear-gradient(45deg, #FE6B8B 30%, #FF8E53 90%)",
+                  color: "white",
+                  boxShadow: "0 3px 5px 2px rgba(255, 105, 135, .3)",
+                }}
+              />
+            )}
             <Menu
-              sx={{ mt: "45px" }}
-              id="menu-appbar"
+              sx={{
+                mt: "45px",
+                "& .MuiPaper-root": {
+                  background: "rgba(31, 41, 55, 0.9)", // Dark glassmorphism
+                  backdropFilter: "blur(10px)",
+                  borderRadius: "10px",
+                  boxShadow: "0 8px 32px 0 rgba(0, 0, 0, 0.37)",
+                  color: "white",
+                },
+              }}
+              id="menu-appbar-user"
               anchorEl={anchorElUser}
               anchorOrigin={{ vertical: "top", horizontal: "right" }}
               keepMounted
@@ -177,13 +258,12 @@ function SmartNavbar() {
               open={Boolean(anchorElUser)}
               onClose={handleCloseUserMenu}
             >
-              {settings.map((setting) => (
-                <MenuItem key={setting} onClick={handleCloseUserMenu}>
-                  <Typography textAlign="center" fontWeight={500}>
-                    {setting}
-                  </Typography>
-                </MenuItem>
-              ))}
+              <MenuItem onClick={handleProfile}>
+                <Typography textAlign="center">Profile</Typography>
+              </MenuItem>
+              <MenuItem onClick={handleLogout}>
+                <Typography textAlign="center">Logout</Typography>
+              </MenuItem>
             </Menu>
           </Box>
         </Toolbar>
@@ -191,5 +271,4 @@ function SmartNavbar() {
     </AppBar>
   );
 }
-
 export default SmartNavbar;
