@@ -141,7 +141,13 @@ const StoreTable = ({
               <TableCell align="center">
                 <Chip
                   label={store.status}
-                  color={getStatusColor(store.status) as "success" | "warning" | "error" | "default"}
+                  color={
+                    getStatusColor(store.status) as
+                      | "success"
+                      | "warning"
+                      | "error"
+                      | "default"
+                  }
                   size="small"
                 />
               </TableCell>

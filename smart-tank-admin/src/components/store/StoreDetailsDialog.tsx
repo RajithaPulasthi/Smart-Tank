@@ -64,7 +64,13 @@ const StoreDetailsDialog = ({
           </Box>
           <Chip
             label={store.status}
-            color={getStatusColor(store.status) as "success" | "warning" | "error" | "default"}
+            color={
+              getStatusColor(store.status) as
+                | "success"
+                | "warning"
+                | "error"
+                | "default"
+            }
             size="small"
           />
         </Box>
@@ -210,7 +216,13 @@ const StoreDetailsDialog = ({
                   </Typography>
                   <Chip
                     label={store.status}
-                    color={getStatusColor(store.status) as "success" | "warning" | "error" | "default"}
+                    color={
+                      getStatusColor(store.status) as
+                        | "success"
+                        | "warning"
+                        | "error"
+                        | "default"
+                    }
                     size="small"
                   />
                 </Box>
