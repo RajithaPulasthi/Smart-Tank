@@ -30,7 +30,7 @@ const SmartFooter = () => {
           justifyContent="space-between"
         >
           {/* About Section */}
-          <Grid item xs={12} md={4}>
+          <Grid size={{ xs: 12, md: 4 }}>
             <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
               <img
                 src={SmartTankLogo}
@@ -70,10 +70,10 @@ const SmartFooter = () => {
           </Grid>
 
           {/* Links + Contact Section */}
-          <Grid item xs={12} md={7}>
+          <Grid size={{ xs: 12, md: 7 }}>
             <Grid container spacing={{ xs: 4, md: 5 }}>
               {/* Quick Links */}
-              <Grid item xs={6} sm={4}>
+              <Grid size={{ xs: 6, sm: 4 }}>
                 <Typography variant="h6" fontWeight="bold" gutterBottom>
                   Quick Links
                 </Typography>
@@ -107,7 +107,7 @@ const SmartFooter = () => {
               </Grid>
 
               {/* Contact */}
-              <Grid item xs={12} sm={4}>
+              <Grid size={{ xs: 12, sm: 4 }}>
                 <Typography variant="h6" fontWeight="bold" gutterBottom>
                   Contact
                 </Typography>

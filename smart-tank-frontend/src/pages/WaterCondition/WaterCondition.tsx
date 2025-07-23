@@ -61,7 +61,7 @@ const SmartWaterRecommendation = () => {
 
         <Grid container spacing={4} justifyContent="center">
           {/* Form Section */}
-          <Grid xs={12} md={5} lg={4}>
+          <Grid size={{ xs: 12, md: 5, lg: 4 }}>
             <Paper
               sx={{
                 p: 4,
@@ -133,7 +133,7 @@ const SmartWaterRecommendation = () => {
 
           {/* Results Section */}
           {results.length > 0 && (
-            <Grid xs={12} md={7} lg={8}>
+            <Grid size={{ xs: 12, md: 7, lg: 8 }}>
               <Paper
                 sx={{
                   p: 4,
@@ -149,7 +149,7 @@ const SmartWaterRecommendation = () => {
                 </Typography>
                 <Grid container spacing={3}>
                   {results.map((group, colIdx) => (
-                    <Grid xs={12} sm={6} key={colIdx}>
+                    <Grid size={{ xs: 12, sm: 6 }} key={colIdx}>
                       <Typography variant="h6" sx={{ mb: 2, color: "#64ffda" }}>
                         {colIdx === 0 ? "Ideal Matches" : "Good Matches"}
                       </Typography>

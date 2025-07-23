@@ -96,7 +96,7 @@ class AuthService {
       let data: AuthResponse;
       try {
         data = await response.json();
-      } catch (jsonError) {
+      } catch {
         // If JSON parsing fails, get the text to see what we received
         const responseText = await response.text();
         console.error("Failed to parse JSON response:", responseText);

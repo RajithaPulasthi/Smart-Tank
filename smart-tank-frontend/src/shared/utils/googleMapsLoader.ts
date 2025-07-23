@@ -1,6 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
-// Global state to track Google Maps API loading
 let isGoogleMapsLoading = false;
 let isGoogleMapsLoaded = false;
 let googleMapsPromise: Promise<void> | null = null;

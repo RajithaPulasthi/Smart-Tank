@@ -4,6 +4,7 @@ import Dashboard from "../pages/Dashboard/Dashboard";
 import UserManagement from "../pages/Admin/UserManagement/UserMnagement";
 import Users from "../pages/Users/Users";
 import Profile from "../pages/Profile/Profile";
+import StoreManagement from "../pages/Store/StoreManagement";
 import ProtectedLayout from "../layout/ProtectedLayout";
 
 const isAuthenticated = () => {
@@ -47,6 +48,16 @@ const AppRoutes = () => (
           <PrivateRoute>
             <ProtectedLayout>
               <Users />
+            </ProtectedLayout>
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/store"
+        element={
+          <PrivateRoute>
+            <ProtectedLayout>
+              <StoreManagement />
             </ProtectedLayout>
           </PrivateRoute>
         }
