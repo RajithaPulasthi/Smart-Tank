@@ -72,7 +72,7 @@ export const saveAdminUser = async (user: User, token: string): Promise<boolean>
     email: user.email,
     userName: user.userName,
     password: user.password ?? "1234", // default/fallback password
-    userType: 1, // Admin
+    userType: 2, // Store Admin (corrected from 1)
     status: 1    // Active
   };
 
@@ -85,7 +85,14 @@ export const saveAdminUser = async (user: User, token: string): Promise<boolean>
     body: JSON.stringify(payload),
   });
 
-  return res.ok;
+  if (!res.ok) {
+    if (res.status === 409) {
+      throw new Error("A user with this email or username already exists. Please use different email or username.");
+    }
+    throw new Error(`Failed to create user: ${res.status} ${res.statusText}`);
+  }
+
+  return true;
 };
 
 export const updateUserStatus = async (
@@ -144,5 +151,19 @@ export const getAllCustomersAndStoreAdmins = async (
   // Filter only Customer and StoreAdmin users
   return data.filter((user) =>
     ["Customer", "StoreAdmin"].includes(user.userType)
+  );
+};
+
+export const getAllCustomers = async (token: string): Promise<Customer[]> => {
+  const users = await getAllUsers(token);
+  return users.filter(
+    (user) => user.userType && user.userType.toLowerCase() === "customer"
+  );
+};
+
+export const getAllStoreAdmins = async (token: string): Promise<Customer[]> => {
+  const users = await getAllUsers(token);
+  return users.filter(
+    (user) => user.userType && user.userType.toLowerCase() === "storeadmin"
   );
 };

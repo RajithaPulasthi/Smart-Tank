@@ -2,9 +2,11 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Login from "../pages/Login/Login";
 import Dashboard from "../pages/Dashboard/Dashboard";
 import UserManagement from "../pages/Admin/UserManagement/UserMnagement";
-import Users from "../pages/Users/Users";
+import CustomerManagement from "../pages/Users/CustomerManagement";
+import StoreAdminManagement from "../pages/Users/StoreAdminManagement";
 import Profile from "../pages/Profile/Profile";
 import StoreManagement from "../pages/Store/StoreManagement";
+import FishManagement from "../pages/Fish/FishManagement";
 import ProtectedLayout from "../layout/ProtectedLayout";
 
 const isAuthenticated = () => {
@@ -43,11 +45,21 @@ const AppRoutes = () => (
         }
       />
       <Route
-        path="/user"
+        path="/users/customer"
         element={
           <PrivateRoute>
             <ProtectedLayout>
-              <Users />
+              <CustomerManagement />
+            </ProtectedLayout>
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/users/store-admin"
+        element={
+          <PrivateRoute>
+            <ProtectedLayout>
+              <StoreAdminManagement />
             </ProtectedLayout>
           </PrivateRoute>
         }
@@ -58,6 +70,16 @@ const AppRoutes = () => (
           <PrivateRoute>
             <ProtectedLayout>
               <StoreManagement />
+            </ProtectedLayout>
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/fish"
+        element={
+          <PrivateRoute>
+            <ProtectedLayout>
+              <FishManagement />
             </ProtectedLayout>
           </PrivateRoute>
         }

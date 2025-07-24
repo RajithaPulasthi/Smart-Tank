@@ -19,8 +19,12 @@ import {
   Business as BusinessIcon,
   CheckCircle as ApproveIcon,
   Cancel as RejectIcon,
+  Download as DownloadIcon,
+  Pets as FishIcon,
 } from "@mui/icons-material";
+import { useState } from "react";
 import type { Store } from "../../types/Store";
+import { downloadFishListAsTxt } from "../../services/storeService";
 
 interface StoreDetailsDialogProps {
   open: boolean;
@@ -39,8 +43,9 @@ const StoreDetailsDialog = ({
   onReject,
   showActions = false,
 }: StoreDetailsDialogProps) => {
-  if (!store) return null;
+  const [downloadLoading, setDownloadLoading] = useState(false);
 
+  if (!store) return null;
   const getStatusColor = (status: string) => {
     switch (status) {
       case "APPROVED":
@@ -51,6 +56,21 @@ const StoreDetailsDialog = ({
         return "error";
       default:
         return "default";
+    }
+  };
+
+  const handleDownloadFishList = async () => {
+    setDownloadLoading(true);
+    try {
+      await downloadFishListAsTxt(store.id, store.aquariumName);
+    } catch (error) {
+      alert(
+        error instanceof Error
+          ? error.message
+          : "Failed to download fish list. Please try again."
+      );
+    } finally {
+      setDownloadLoading(false);
     }
   };
 
@@ -235,6 +255,40 @@ const StoreDetailsDialog = ({
                   </Typography>
                 </Box>
               </Box>
+            </CardContent>
+          </Card>
+
+          {/* Fish List */}
+          <Card variant="outlined">
+            <CardContent>
+              <Box
+                display="flex"
+                alignItems="center"
+                justifyContent="space-between"
+                mb={2}
+              >
+                <Box display="flex" alignItems="center" gap={1}>
+                  <FishIcon color="primary" />
+                  <Typography variant="h6" color="primary">
+                    Fish List
+                  </Typography>
+                </Box>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  startIcon={<DownloadIcon />}
+                  onClick={handleDownloadFishList}
+                  size="small"
+                  disabled={downloadLoading}
+                >
+                  {downloadLoading ? "Downloading..." : "Download Fish List"}
+                </Button>
+              </Box>
+              <Typography variant="body2" color="textSecondary">
+                Download the complete fish list for {store.aquariumName} as a
+                TXT file. This file contains all the fish species available in
+                this aquarium store.
+              </Typography>
             </CardContent>
           </Card>
         </Box>

@@ -1,22 +1,24 @@
-import {
-  Box,
-  Typography,
-  Button,
-  Tab,
-  Tabs,
-  Card,
-  CardContent,
-  Badge,
-} from "@mui/material";
-import { useState, useEffect } from "react";
+import { Box, Typography, Button, Tab, Tabs, Badge } from "@mui/material";
+import { useState, useEffect, useCallback } from "react";
+import { useNotification } from "../../hooks/useNotification";
 import StoreTable from "../../components/store/StoreTable";
-import PendingRequestsDialog from "../../components/store/PendingRequestsDialog";
 import StoreDetailsDialog from "../../components/store/StoreDetailsDialog";
+import UserSelectionDialog from "../../components/store/UserSelectionDialog";
+import FishManagementDialog from "../../components/store/FishManagementDialog";
 import {
   getApprovedStores,
   getPendingStores,
+  getRejectedStores,
+  getActiveStores,
+  getInactiveStores,
   approveStore,
   rejectStore,
+  connectUserToAquarium,
+  checkStoreHasFish,
+  completeStore,
+  checkAquariumUser,
+  getAquariumUserData,
+  getUserById,
 } from "../../services/storeService";
 import type { Store } from "../../types/Store";
 
@@ -43,43 +45,57 @@ function TabPanel(props: TabPanelProps) {
 }
 
 const StoreManagement = () => {
+  const { showSuccess, showError } = useNotification();
   const [tabValue, setTabValue] = useState(0);
   const [approvedStores, setApprovedStores] = useState<Store[]>([]);
   const [pendingStores, setPendingStores] = useState<Store[]>([]);
-  const [pendingDialogOpen, setPendingDialogOpen] = useState(false);
+  const [rejectedStores, setRejectedStores] = useState<Store[]>([]);
+  const [activeStores, setActiveStores] = useState<Store[]>([]);
+  const [inactiveStores, setInactiveStores] = useState<Store[]>([]);
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
   const [selectedStore, setSelectedStore] = useState<Store | null>(null);
+  const [userSelectionDialogOpen, setUserSelectionDialogOpen] = useState(false);
+  const [storeForUserConnection, setStoreForUserConnection] =
+    useState<Store | null>(null);
+  const [fishManagementDialogOpen, setFishManagementDialogOpen] =
+    useState(false);
+  const [storeForFishManagement, setStoreForFishManagement] =
+    useState<Store | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const fetchStores = async () => {
+  const fetchStores = useCallback(async () => {
     const token = localStorage.getItem("token");
     if (!token) return;
 
     setLoading(true);
     try {
-      const [approved, pending] = await Promise.all([
-        getApprovedStores(token),
-        getPendingStores(token),
-      ]);
+      const [approved, pending, rejected, active, inactive] = await Promise.all(
+        [
+          getApprovedStores(token),
+          getPendingStores(token),
+          getRejectedStores(token),
+          getActiveStores(token),
+          getInactiveStores(token),
+        ]
+      );
       setApprovedStores(approved);
       setPendingStores(pending);
+      setRejectedStores(rejected);
+      setActiveStores(active);
+      setInactiveStores(inactive);
     } catch (error) {
       console.error("Error fetching stores:", error);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchStores();
-  }, []);
+  }, [fetchStores]);
 
   const handleTabChange = (_: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
-  };
-
-  const handleViewPendingRequests = () => {
-    setPendingDialogOpen(true);
   };
 
   const handleViewStoreDetails = (store: Store) => {
@@ -95,15 +111,14 @@ const StoreManagement = () => {
       const success = await approveStore(store.id, token);
       if (success) {
         fetchStores(); // Refresh the lists
-        setPendingDialogOpen(false);
         setDetailsDialogOpen(false);
-        alert("Store approved successfully!");
+        showSuccess(`Store "${store.aquariumName}" approved successfully!`);
       } else {
-        alert("Failed to approve store");
+        showError("Failed to approve store.");
       }
     } catch (error) {
       console.error("Error approving store:", error);
-      alert("Error approving store");
+      showError("An error occurred while approving the store.");
     }
   };
 
@@ -115,34 +130,161 @@ const StoreManagement = () => {
       const success = await rejectStore(store.id, token);
       if (success) {
         fetchStores(); // Refresh the lists
-        setPendingDialogOpen(false);
         setDetailsDialogOpen(false);
-        alert("Store rejected successfully!");
+        showSuccess(`Store "${store.aquariumName}" rejected successfully!`);
       } else {
-        alert("Failed to reject store");
+        showError("Failed to reject store.");
       }
     } catch (error) {
       console.error("Error rejecting store:", error);
-      alert("Error rejecting store");
+      showError("An error occurred while rejecting the store.");
+    }
+  };
+
+  const handleConnectUser = async (store: Store) => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
+    try {
+      // Check if a user is already assigned to this aquarium
+      const isUserAssigned = await checkAquariumUser(store.id, token);
+
+      if (isUserAssigned) {
+        // Get the user data to show current assignment
+        const userData = await getAquariumUserData(store.id, token);
+        if (userData) {
+          const userDetails = await getUserById(userData.userId, token);
+          if (userDetails) {
+            const confirmChange = confirm(
+              `This aquarium is already assigned to a user.\n\n` +
+                `Current Assignment:\n` +
+                `Aquarium: ${userData.aquariumName}\n` +
+                `User ID: ${userData.userId}\n\n` +
+                `Do you want to assign a different user?`
+            );
+
+            if (!confirmChange) {
+              return;
+            }
+          }
+        }
+      }
+
+      // Proceed with user selection
+      setStoreForUserConnection(store);
+      setUserSelectionDialogOpen(true);
+    } catch (error) {
+      console.error("Error checking aquarium user:", error);
+      showError("An error occurred while checking current user assignment.");
+    }
+  };
+
+  const handleUserSelected = async (userId: number) => {
+    if (!storeForUserConnection) return;
+
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
+    try {
+      const success = await connectUserToAquarium(
+        userId,
+        storeForUserConnection.id,
+        token
+      );
+      if (success) {
+        showSuccess(
+          `User connected to aquarium "${storeForUserConnection.aquariumName}" successfully!`
+        );
+      } else {
+        showError("Failed to connect user to aquarium.");
+      }
+    } catch (error) {
+      console.error("Error connecting user to aquarium:", error);
+      if (error instanceof Error) {
+        showError(`Error connecting user: ${error.message}`);
+      } else {
+        showError("An error occurred while connecting user to aquarium.");
+      }
+    } finally {
+      setUserSelectionDialogOpen(false);
+      setStoreForUserConnection(null);
+    }
+  };
+
+  const handleAddFish = async (store: Store) => {
+    setStoreForFishManagement(store);
+    setFishManagementDialogOpen(true);
+  };
+
+  const handleComplete = async (store: Store) => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
+    try {
+      // Check if store has users using the new API endpoint
+      const hasUsers = await checkAquariumUser(store.id, token);
+      if (!hasUsers) {
+        showError(
+          "Cannot complete aquarium: No user connected to this aquarium. Please connect a user first."
+        );
+        return;
+      }
+
+      // Get user assignment details to show in success message
+      const userData = await getAquariumUserData(store.id, token);
+
+      // Check if store has fish
+      console.log(`Checking fish for aquarium ID: ${store.id}`);
+      const hasFish = await checkStoreHasFish(store.id, token);
+      console.log(`Has fish result: ${hasFish}`);
+
+      if (!hasFish) {
+        showError(
+          `Cannot complete aquarium: No fish added to this aquarium (ID: ${store.id}). Please add fish to the aquarium first.`
+        );
+        return;
+      }
+
+      // Both requirements met, complete the store
+      const success = await completeStore(store.id, token);
+      if (success) {
+        const userInfo = userData
+          ? ` (Assigned User ID: ${userData.userId})`
+          : "";
+        showSuccess(
+          `Aquarium "${store.aquariumName}" completed successfully! Status changed to Active.${userInfo}`
+        );
+        fetchStores(); // Refresh the stores list
+      } else {
+        showError("Failed to complete aquarium.");
+      }
+    } catch (error) {
+      console.error("Error completing aquarium:", error);
+      if (error instanceof Error) {
+        showError(`Error completing aquarium: ${error.message}`);
+      } else {
+        showError("An error occurred while completing the aquarium.");
+      }
     }
   };
 
   return (
-    <Box p={3}>
+    <Box sx={{ width: "100%", p: 3 }}>
       <Box
-        display="flex"
-        justifyContent="space-between"
-        alignItems="center"
-        mb={3}
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          mb: 3,
+        }}
       >
-        <Typography variant="h4" fontWeight="bold">
+        <Typography variant="h5" fontWeight={600}>
           Store Management
         </Typography>
         <Button
           variant="contained"
-          color="primary"
-          onClick={handleViewPendingRequests}
-          disabled={loading}
+          onClick={() => setDetailsDialogOpen(true)}
+          disabled={pendingStores.length === 0}
         >
           <Badge badgeContent={pendingStores.length} color="error">
             View Pending Requests
@@ -150,47 +292,31 @@ const StoreManagement = () => {
         </Button>
       </Box>
 
-      {/* Statistics Cards */}
-      <Box display="flex" gap={2} mb={3}>
-        <Card sx={{ minWidth: 200 }}>
-          <CardContent>
-            <Typography color="textSecondary" gutterBottom>
-              Approved Stores
-            </Typography>
-            <Typography variant="h4" color="success.main">
-              {approvedStores.length}
-            </Typography>
-          </CardContent>
-        </Card>
-        <Card sx={{ minWidth: 200 }}>
-          <CardContent>
-            <Typography color="textSecondary" gutterBottom>
-              Pending Requests
-            </Typography>
-            <Typography variant="h4" color="warning.main">
-              {pendingStores.length}
-            </Typography>
-          </CardContent>
-        </Card>
-      </Box>
-
-      {/* Tabs */}
       <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
-        <Tabs value={tabValue} onChange={handleTabChange}>
-          <Tab label={`Approved Stores (${approvedStores.length})`} />
-          <Tab label={`Pending Stores (${pendingStores.length})`} />
+        <Tabs
+          value={tabValue}
+          onChange={handleTabChange}
+          aria-label="store management tabs"
+          variant="scrollable"
+          scrollButtons="auto"
+        >
+          <Tab label={`Approved (${approvedStores.length})`} />
+          <Tab label={`Pending (${pendingStores.length})`} />
+          <Tab label={`Rejected (${rejectedStores.length})`} />
+          <Tab label={`Active (${activeStores.length})`} />
+          <Tab label={`Inactive (${inactiveStores.length})`} />
         </Tabs>
       </Box>
-
       <TabPanel value={tabValue} index={0}>
         <StoreTable
           stores={approvedStores}
           onViewDetails={handleViewStoreDetails}
-          showActions={false}
+          onConnectUser={handleConnectUser}
+          onAddFish={handleAddFish}
+          onComplete={handleComplete}
           loading={loading}
         />
       </TabPanel>
-
       <TabPanel value={tabValue} index={1}>
         <StoreTable
           stores={pendingStores}
@@ -201,25 +327,63 @@ const StoreManagement = () => {
           loading={loading}
         />
       </TabPanel>
+      <TabPanel value={tabValue} index={2}>
+        <StoreTable
+          stores={rejectedStores}
+          onViewDetails={handleViewStoreDetails}
+          showActions={true}
+          onApprove={handleApproveStore}
+          loading={loading}
+        />
+      </TabPanel>
+      <TabPanel value={tabValue} index={3}>
+        <StoreTable
+          stores={activeStores}
+          onViewDetails={handleViewStoreDetails}
+          loading={loading}
+        />
+      </TabPanel>
+      <TabPanel value={tabValue} index={4}>
+        <StoreTable
+          stores={inactiveStores}
+          onViewDetails={handleViewStoreDetails}
+          loading={loading}
+        />
+      </TabPanel>
 
-      {/* Pending Requests Dialog */}
-      <PendingRequestsDialog
-        open={pendingDialogOpen}
-        onClose={() => setPendingDialogOpen(false)}
-        pendingStores={pendingStores}
-        onViewDetails={handleViewStoreDetails}
-        onApprove={handleApproveStore}
-        onReject={handleRejectStore}
+      {selectedStore && (
+        <StoreDetailsDialog
+          open={detailsDialogOpen}
+          onClose={() => setDetailsDialogOpen(false)}
+          store={selectedStore}
+          onApprove={handleApproveStore}
+          onReject={handleRejectStore}
+        />
+      )}
+
+      <UserSelectionDialog
+        open={userSelectionDialogOpen}
+        onClose={() => {
+          setUserSelectionDialogOpen(false);
+          setStoreForUserConnection(null);
+        }}
+        onSelect={handleUserSelected}
+        title={
+          storeForUserConnection
+            ? `Connect Store Admin to ${storeForUserConnection.aquariumName}`
+            : "Select Store Admin to Connect"
+        }
+        currentAquariumId={storeForUserConnection?.id}
       />
 
-      {/* Store Details Dialog */}
-      <StoreDetailsDialog
-        open={detailsDialogOpen}
-        onClose={() => setDetailsDialogOpen(false)}
-        store={selectedStore}
-        onApprove={handleApproveStore}
-        onReject={handleRejectStore}
-        showActions={selectedStore?.status === "PENDING"}
+      <FishManagementDialog
+        open={fishManagementDialogOpen}
+        onClose={() => {
+          setFishManagementDialogOpen(false);
+          setStoreForFishManagement(null);
+        }}
+        aquariumId={storeForFishManagement?.id || 0}
+        aquariumName={storeForFishManagement?.aquariumName || ""}
       />
     </Box>
   );

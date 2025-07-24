@@ -10,5 +10,5 @@ export type Store = {
   address: string;
   province: string;
   postalCode: string;
-  status: "PENDING" | "APPROVED" | "REJECTED";
+  status: "PENDING" | "APPROVED" | "REJECTED" | "ACTIVE" | "INACTIVE";
 };

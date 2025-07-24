@@ -6,11 +6,15 @@ import tseslint from 'typescript-eslint'
 
 export default tseslint.config(
   { ignores: ['dist'] },
+  js.configs.recommended,
+  ...tseslint.configs.recommendedTypeChecked,
   {
-    extends: [js.configs.recommended, ...tseslint.configs.recommended],
     files: ['**/*.{ts,tsx}'],
     languageOptions: {
-      ecmaVersion: 2020,
+      parserOptions: {
+        project: true,
+        tsconfigRootDir: import.meta.dirname,
+      },
       globals: globals.browser,
     },
     plugins: {
@@ -19,10 +23,7 @@ export default tseslint.config(
     },
     rules: {
       ...reactHooks.configs.recommended.rules,
-      'react-refresh/only-export-components': [
-        'warn',
-        { allowConstantExport: true },
-      ],
+      'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
     },
   },
 )
