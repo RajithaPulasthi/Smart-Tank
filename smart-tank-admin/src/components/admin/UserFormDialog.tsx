@@ -18,6 +18,7 @@ type Props = {
   onClose: () => void;
   user: User | null;
   onSave: (user: User) => void;
+  userType: number;
 };
 
 const statusOptions = [

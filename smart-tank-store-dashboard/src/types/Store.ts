@@ -1,16 +1,16 @@
 export type StoreAdmin = {
   id: number;
-  username: string;
-  password: string;
-  storeName: string;
-  storeId: number;
+  fullName: string;
+  address: string | null;
+  email: string;
+  phone: string;
+  userName: string;
+  status: string;
+  userType: string;
 };
 
-export type Store = {
-  id: number;
-  name: string;
-  address: string;
-  phone: string;
-  email: string;
-  status: 'ACTIVE' | 'INACTIVE';
+export type LoginResponse = {
+  token: string;
+  user: StoreAdmin;
+  authorities: Array<{ authority: string }>;
 };

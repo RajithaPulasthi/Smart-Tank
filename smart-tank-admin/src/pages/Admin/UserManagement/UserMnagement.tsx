@@ -160,6 +160,7 @@ const UserManagement = () => {
         onClose={() => setOpenForm(false)}
         user={selectedUser}
         onSave={handleSaveUser}
+        userType={1}
       />
 
       {/* Confirmation Dialog */}

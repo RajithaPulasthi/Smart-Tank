@@ -1,6 +1,20 @@
 import type { Store } from "../types/Store";
 import type { AquariumFish } from "../types/Fish";
 
+export interface StoreInfo {
+  id?: number;
+  about: string;
+  shopEmail: string;
+  contactNumber: string;
+  shopAddress: string;
+  openingHours: string;
+  facebookUrl?: string;
+  instagramUrl?: string;
+  youTubeUrl?: string;
+  twitterUrl?: string;
+  aquariumId: number;
+}
+
 const API_BASE = "http://localhost:8082/api/Aquariums";
 
 export const getAllStores = async (token: string): Promise<Store[]> => {
@@ -542,5 +556,76 @@ export const deleteFishFromStore = async (
   } catch (error) {
     console.error("Error deleting fish from aquarium:", error);
     throw error;
+  }
+};
+
+export const getStoreInfo = async (
+  aquariumId: number,
+  token: string
+): Promise<StoreInfo | null> => {
+  try {
+    const response = await fetch(`${API_BASE}/aquarium-shop-info/${aquariumId}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (response.status === 404) {
+      return null;
+    }
+
+    if (!response.ok) {
+      throw new Error(`Failed to get store info: ${response.status} ${response.statusText}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Error getting store info:", error);
+    return null;
+  }
+};
+
+export const updateStoreInfo = async (
+  id: number,
+  storeInfo: StoreInfo,
+  token: string
+): Promise<boolean> => {
+  try {
+    const response = await fetch(`${API_BASE}/aquarium-shop-info/update/${id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(storeInfo),
+    });
+
+    return response.ok;
+  } catch (error) {
+    console.error("Error updating store info:", error);
+    return false;
+  }
+};
+
+export const addStoreInfo = async (
+  storeInfo: StoreInfo,
+  token: string
+): Promise<boolean> => {
+  try {
+    const response = await fetch(`${API_BASE}/aquarium-shop-info/add`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(storeInfo),
+      }
+    );
+
+    return response.ok;
+  } catch (error) {
+    console.error("Error adding store info:", error);
+    return false;
   }
 };

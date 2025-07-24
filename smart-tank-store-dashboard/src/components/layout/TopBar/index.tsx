@@ -107,7 +107,7 @@ const TopBar = ({ onToggleSidebar }: TopBarProps) => {
                 fontWeight: "bold",
               }}
             >
-              {currentAdmin?.username === "admin1" ? "A1" : "A2"}
+              {currentAdmin?.userName === "admin1" ? "A1" : "A2"}
             </Avatar>
           </Button>
 

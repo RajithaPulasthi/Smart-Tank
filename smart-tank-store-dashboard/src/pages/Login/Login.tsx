@@ -27,12 +27,57 @@ const Login = () => {
       const result = await loginStoreAdmin({ username, password });
 
       if (result) {
-        // Store login data in localStorage
-        localStorage.setItem("storeAdmin", JSON.stringify(result.admin));
-        localStorage.setItem("currentStore", JSON.stringify(result.store));
+        // Store token and user data in localStorage
+        localStorage.setItem("token", result.token);
+        localStorage.setItem("currentUser", JSON.stringify(result.user));
+        localStorage.setItem("storeAdmin", JSON.stringify(result.user)); // Add this line
 
-        // Navigate to dashboard
+        // Fetch aquarium ID
+        const userId = result.user.id;
+        const token = localStorage.getItem("token"); // Get the token
+
+        if (!token) {
+          console.error("Authentication token not found after login.");
+          navigate("/login"); // Redirect to login if token is missing
+          return;
+        }
+
+        try {
+          const aquariumResponse = await fetch(`http://localhost:8082/api/Aquariums/user/${userId}`, {
+            headers: {
+              "Authorization": `Bearer ${token}`, // Add Authorization header
+            },
+          });
+          if (aquariumResponse.ok) {
+            const aquariumData = await aquariumResponse.json();
+            console.log("Aquarium API response:", aquariumData); // Log the full response
+            if (aquariumData && aquariumData.length > 0 && aquariumData[0].id) {
+              // Aquarium ID will be fetched directly when needed, not stored here
+            } else {
+              console.warn("Aquarium ID not found in response or response is empty:", aquariumData);
+            }
+          } else {
+            console.error("Failed to fetch aquarium data. Status:", aquariumResponse.status, "StatusText:", aquariumResponse.statusText);
+            const errorBody = await aquariumResponse.text(); // Read response body for more details
+            console.error("Failed to fetch aquarium data. Response body:", errorBody);
+          }
+        } catch (aquariumError) {
+          console.error("Error fetching aquarium data:", aquariumError);
+        }
+
         navigate("/dashboard");
+
+        // const storeStatus = result.store.status; // This is no longer available directly
+
+        // if (storeStatus === "ACTIVE") {
+        //   navigate("/dashboard");
+        // } else if (storeStatus === "PENDING") {
+        //   setError("Your store is pending approval. Please wait for activation.");
+        // } else if (storeStatus === "APPROVED") {
+        //   setError("Your store has been approved but is not yet active. Please wait for activation.");
+        // } else {
+        //   setError("Your store is inactive or has an unknown status. Please contact support.");
+        // }
       } else {
         setError("Invalid username or password");
       }
@@ -113,17 +158,7 @@ const Login = () => {
           </Button>
         </Box>
 
-        <Box mt={3} p={2} sx={{ backgroundColor: "grey.50", borderRadius: 1 }}>
-          <Typography variant="subtitle2" fontWeight="bold" gutterBottom>
-            Demo Accounts:
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            • admin1 / 1234 (Shop 1)
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            • admin2 / 1234 (Shop 2)
-          </Typography>
-        </Box>
+        
       </Paper>
     </Box>
   );

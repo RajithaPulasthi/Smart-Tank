@@ -18,14 +18,14 @@ import {
 } from "@mui/icons-material";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
-import type { Store } from "../../../types/Store";
+import type { StoreAdmin } from "../../../types/Store";
 
 type SidebarProps = {
   collapsed: boolean;
 };
 
 const Sidebar = ({ collapsed }: SidebarProps) => {
-  const [currentStore, setCurrentStore] = useState<Store | null>(null);
+  const [currentStore, setCurrentStore] = useState<StoreAdmin | null>(null);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -74,7 +74,7 @@ const Sidebar = ({ collapsed }: SidebarProps) => {
             fontWeight="600"
             sx={{ fontSize: "1.125rem" }}
           >
-            {currentStore?.name || "Shop 1"}
+            {currentStore?.fullName || "Shop 1"}
           </Typography>
         )}
         {collapsed && (

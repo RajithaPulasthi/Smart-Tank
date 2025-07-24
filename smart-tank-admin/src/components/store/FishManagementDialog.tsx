@@ -48,7 +48,7 @@ const FishManagementDialog = ({
   aquariumId,
   aquariumName,
 }: FishManagementDialogProps) => {
-  const { showSuccess, showError } = useNotification();
+  const { showSuccess } = useNotification();
   const [availableFish, setAvailableFish] = useState<Fish[]>([]);
   const [aquariumFish, setAquariumFish] = useState<AquariumFish[]>([]);
   const [selectedFishIds, setSelectedFishIds] = useState<string[]>([]);

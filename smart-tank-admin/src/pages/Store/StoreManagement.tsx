@@ -1,10 +1,12 @@
-import { Box, Typography, Button, Tab, Tabs, Badge } from "@mui/material";
+import { Box, Typography, Tab, Tabs } from "@mui/material";
 import { useState, useEffect, useCallback } from "react";
 import { useNotification } from "../../hooks/useNotification";
 import StoreTable from "../../components/store/StoreTable";
 import StoreDetailsDialog from "../../components/store/StoreDetailsDialog";
 import UserSelectionDialog from "../../components/store/UserSelectionDialog";
 import FishManagementDialog from "../../components/store/FishManagementDialog";
+import FishListDialog from "../../components/store/FishListDialog";
+import StoreInfoDialog from "../../components/store/StoreInfoDialog";
 import {
   getApprovedStores,
   getPendingStores,
@@ -19,8 +21,14 @@ import {
   checkAquariumUser,
   getAquariumUserData,
   getUserById,
+  getAquariumFish,
+  getStoreInfo,
+  updateStoreInfo,
+  addStoreInfo,
 } from "../../services/storeService";
 import type { Store } from "../../types/Store";
+import type { AquariumFish } from "../../types/Fish";
+import type { StoreInfo } from "../../services/storeService";
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -62,6 +70,12 @@ const StoreManagement = () => {
   const [storeForFishManagement, setStoreForFishManagement] =
     useState<Store | null>(null);
   const [loading, setLoading] = useState(false);
+  const [fishListDialogOpen, setFishListDialogOpen] = useState(false);
+  const [fishList, setFishList] = useState<AquariumFish[]>([]);
+  const [loadingFish, setLoadingFish] = useState(false);
+  const [storeInfoDialogOpen, setStoreInfoDialogOpen] = useState(false);
+  const [storeInfo, setStoreInfo] = useState<StoreInfo | null>(null);
+  const [loadingStoreInfo, setLoadingStoreInfo] = useState(false);
 
   const fetchStores = useCallback(async () => {
     const token = localStorage.getItem("token");
@@ -268,6 +282,68 @@ const StoreManagement = () => {
     }
   };
 
+  const handleViewFish = async (store: Store) => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
+    setSelectedStore(store);
+    setFishListDialogOpen(true);
+    setLoadingFish(true);
+
+    try {
+      const fish = await getAquariumFish(store.id, token);
+      setFishList(fish);
+    } catch (error) {
+      console.error("Error fetching fish list:", error);
+      showError("Failed to fetch fish list.");
+    } finally {
+      setLoadingFish(false);
+    }
+  };
+
+  const handleEditInfo = async (store: Store) => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
+    setSelectedStore(store);
+    setLoadingStoreInfo(true);
+
+    try {
+      const info = await getStoreInfo(store.id, token);
+      if (info) {
+        setStoreInfo(info);
+        setStoreInfoDialogOpen(true); // Open dialog only if info is available
+      } else {
+        showError("No store information available for this aquarium. Please add it first.");
+      }
+    } catch (error) {
+      console.error("Error fetching store info:", error);
+      showError("Failed to fetch store info.");
+    } finally {
+      setLoadingStoreInfo(false);
+    }
+  };
+
+  const handleSaveStoreInfo = async (info: StoreInfo) => {
+    const token = localStorage.getItem("token");
+    if (!token || !selectedStore) return;
+
+    try {
+      // Always call updateStoreInfo, assuming the record exists or the backend handles upsert
+      const success = await updateStoreInfo(info.id!, info, token);
+
+      if (success) {
+        showSuccess("Store information saved successfully!");
+        setStoreInfoDialogOpen(false);
+      } else {
+        showError("Failed to save store information.");
+      }
+    } catch (error) {
+      console.error("Error saving store info:", error);
+      showError("An error occurred while saving the store information.");
+    }
+  };
+
   return (
     <Box sx={{ width: "100%", p: 3 }}>
       <Box
@@ -281,15 +357,7 @@ const StoreManagement = () => {
         <Typography variant="h5" fontWeight={600}>
           Store Management
         </Typography>
-        <Button
-          variant="contained"
-          onClick={() => setDetailsDialogOpen(true)}
-          disabled={pendingStores.length === 0}
-        >
-          <Badge badgeContent={pendingStores.length} color="error">
-            View Pending Requests
-          </Badge>
-        </Button>
+        
       </Box>
 
       <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
@@ -340,6 +408,8 @@ const StoreManagement = () => {
         <StoreTable
           stores={activeStores}
           onViewDetails={handleViewStoreDetails}
+          onViewFish={handleViewFish}
+          onEditInfo={handleEditInfo}
           loading={loading}
         />
       </TabPanel>
@@ -385,6 +455,27 @@ const StoreManagement = () => {
         aquariumId={storeForFishManagement?.id || 0}
         aquariumName={storeForFishManagement?.aquariumName || ""}
       />
+
+      {selectedStore && (
+        <FishListDialog
+          open={fishListDialogOpen}
+          onClose={() => setFishListDialogOpen(false)}
+          fish={fishList}
+          loading={loadingFish}
+          aquariumName={selectedStore.aquariumName}
+        />
+      )}
+
+      {selectedStore && (
+        <StoreInfoDialog
+          open={storeInfoDialogOpen}
+          onClose={() => setStoreInfoDialogOpen(false)}
+          storeInfo={storeInfo}
+          onSave={handleSaveStoreInfo}
+          loading={loadingStoreInfo}
+          aquariumId={selectedStore.id}
+        />
+      )}
     </Box>
   );
 };

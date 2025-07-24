@@ -20,6 +20,8 @@ import {
   PersonAdd as ConnectUserIcon,
   Add as AddFishIcon,
   CheckCircleOutline as CompleteIcon,
+  Pets as ViewFishIcon,
+  Edit as EditIcon,
 } from "@mui/icons-material";
 import type { Store } from "../../types/Store";
 
@@ -32,6 +34,8 @@ interface StoreTableProps {
   onConnectUser?: (store: Store) => void;
   onAddFish?: (store: Store) => void;
   onComplete?: (store: Store) => void;
+  onViewFish?: (store: Store) => void;
+  onEditInfo?: (store: Store) => void;
   loading?: boolean;
 }
 
@@ -44,6 +48,8 @@ const StoreTable = ({
   onConnectUser,
   onAddFish,
   onComplete,
+  onViewFish,
+  onEditInfo,
   loading = false,
 }: StoreTableProps) => {
   const getStatusColor = (status: string) => {
@@ -204,6 +210,29 @@ const StoreTable = ({
                           onClick={() => onComplete?.(store)}
                         >
                           <CompleteIcon />
+                        </IconButton>
+                      </Tooltip>
+                    </>
+                  )}
+
+                  {store.status === "ACTIVE" && (
+                    <>
+                      <Tooltip title="View Fish">
+                        <IconButton
+                          size="small"
+                          color="info"
+                          onClick={() => onViewFish?.(store)}
+                        >
+                          <ViewFishIcon />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="View/Update Info">
+                        <IconButton
+                          size="small"
+                          color="primary"
+                          onClick={() => onEditInfo?.(store)}
+                        >
+                          <EditIcon />
                         </IconButton>
                       </Tooltip>
                     </>
