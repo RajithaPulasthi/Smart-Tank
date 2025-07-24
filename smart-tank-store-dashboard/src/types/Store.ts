@@ -1,16 +1,22 @@
-export type StoreAdmin = {
+// src/types/Store.ts
+
+export interface Authority {
+  authority: string;
+}
+
+export interface StoreUser {
   id: number;
   fullName: string;
+  userName: string;
   address: string | null;
   email: string;
   phone: string;
-  userName: string;
   status: string;
   userType: string;
-};
+}
 
-export type LoginResponse = {
+export interface LoginResponse {
   token: string;
-  user: StoreAdmin;
-  authorities: Array<{ authority: string }>;
-};
+  user: StoreUser;
+  authorities: Authority[];
+}

@@ -1,3 +1,5 @@
+// src/pages/store/Login.tsx
+
 import {
   Box,
   Paper,
@@ -25,64 +27,60 @@ const Login = () => {
 
     try {
       const result = await loginStoreAdmin({ username, password });
+      console.log("Login result:", result);
 
-      if (result) {
-        // Store token and user data in localStorage
+      const isStoreAdmin = result?.authorities?.some(
+        (auth) => auth.authority === "ROLE_AQUARIUM_STOREADMIN"
+      );
+
+      if (result && result.token && result.user && isStoreAdmin) {
         localStorage.setItem("token", result.token);
-        localStorage.setItem("currentUser", JSON.stringify(result.user));
-        localStorage.setItem("storeAdmin", JSON.stringify(result.user)); // Add this line
+        localStorage.setItem(
+          "currentUser",
+          JSON.stringify({ ...result.user, authorities: result.authorities })
+        );
+        localStorage.setItem(
+          "storeAdmin",
+          JSON.stringify({ ...result.user, authorities: result.authorities })
+        );
 
-        // Fetch aquarium ID
         const userId = result.user.id;
-        const token = localStorage.getItem("token"); // Get the token
-
-        if (!token) {
-          console.error("Authentication token not found after login.");
-          navigate("/login"); // Redirect to login if token is missing
-          return;
-        }
 
         try {
-          const aquariumResponse = await fetch(`http://localhost:8082/api/Aquariums/user/${userId}`, {
-            headers: {
-              "Authorization": `Bearer ${token}`, // Add Authorization header
-            },
-          });
+          const aquariumResponse = await fetch(
+            `http://localhost:8082/api/Aquariums/user/${userId}`,
+            {
+              headers: {
+                Authorization: `Bearer ${result.token}`,
+              },
+            }
+          );
+
           if (aquariumResponse.ok) {
             const aquariumData = await aquariumResponse.json();
-            console.log("Aquarium API response:", aquariumData); // Log the full response
-            if (aquariumData && aquariumData.length > 0 && aquariumData[0].id) {
-              // Aquarium ID will be fetched directly when needed, not stored here
-            } else {
-              console.warn("Aquarium ID not found in response or response is empty:", aquariumData);
-            }
+            localStorage.setItem("currentStore", JSON.stringify(aquariumData));
+            console.log("Aquarium API response:", aquariumData);
           } else {
-            console.error("Failed to fetch aquarium data. Status:", aquariumResponse.status, "StatusText:", aquariumResponse.statusText);
-            const errorBody = await aquariumResponse.text(); // Read response body for more details
-            console.error("Failed to fetch aquarium data. Response body:", errorBody);
+            const errorBody = await aquariumResponse.text();
+            console.error("Failed to fetch aquarium data:", errorBody);
           }
         } catch (aquariumError) {
           console.error("Error fetching aquarium data:", aquariumError);
         }
 
         navigate("/dashboard");
-
-        // const storeStatus = result.store.status; // This is no longer available directly
-
-        // if (storeStatus === "ACTIVE") {
-        //   navigate("/dashboard");
-        // } else if (storeStatus === "PENDING") {
-        //   setError("Your store is pending approval. Please wait for activation.");
-        // } else if (storeStatus === "APPROVED") {
-        //   setError("Your store has been approved but is not yet active. Please wait for activation.");
-        // } else {
-        //   setError("Your store is inactive or has an unknown status. Please contact support.");
-        // }
+      } else if (!isStoreAdmin) {
+        setError("You do not have access to the store dashboard.");
       } else {
-        setError("Invalid username or password");
+        setError("Invalid username or password.");
       }
-    } catch (err) {
-      setError("Login failed. Please try again.");
+    } catch (err: unknown) {
+      console.error("Login error:", err);
+      if (err instanceof Error) {
+        setError(err.message || "Login failed. Please try again.");
+      } else {
+        setError("Login failed. Please try again.");
+      }
     } finally {
       setLoading(false);
     }
@@ -157,8 +155,6 @@ const Login = () => {
             {loading ? <CircularProgress size={24} /> : "Sign In"}
           </Button>
         </Box>
-
-        
       </Paper>
     </Box>
   );

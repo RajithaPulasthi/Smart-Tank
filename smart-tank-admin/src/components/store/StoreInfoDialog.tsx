@@ -86,7 +86,8 @@ const StoreInfoDialog = ({
       } catch (e) {
         console.error("Error parsing opening hours from storeInfo:", e);
         // Fallback to default if parsing fails
-        const initialHours: Record<string, { open: string; close: string }> = {};
+        const initialHours: Record<string, { open: string; close: string }> =
+          {};
         daysOfWeek.forEach((day) => {
           initialHours[day] = { open: "09:00", close: "17:00" };
         });
@@ -139,7 +140,9 @@ const StoreInfoDialog = ({
         !formData.contactNumber ||
         !formData.shopAddress
       ) {
-        alert("Please fill in all required fields (About, Shop Email, Contact Number, Shop Address).");
+        alert(
+          "Please fill in all required fields (About, Shop Email, Contact Number, Shop Address)."
+        );
         return;
       }
 
@@ -149,6 +152,7 @@ const StoreInfoDialog = ({
       const updatedFormData = {
         ...formData,
         openingHours: stringifiedOpeningHours,
+        aquariumId: formData.aquariumId || aquariumId,
       };
       console.log("Attempting to save store info:", updatedFormData);
       onSave(updatedFormData);

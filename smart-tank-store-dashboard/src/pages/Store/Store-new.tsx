@@ -209,7 +209,7 @@ const StorePage = () => {
 
   useEffect(() => {
     fetchStoreInfo();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => ({

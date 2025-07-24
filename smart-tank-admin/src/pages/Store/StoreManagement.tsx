@@ -15,6 +15,8 @@ import {
   getInactiveStores,
   approveStore,
   rejectStore,
+  activateStore,
+  deactivateStore,
   connectUserToAquarium,
   checkStoreHasFish,
   completeStore,
@@ -314,7 +316,9 @@ const StoreManagement = () => {
         setStoreInfo(info);
         setStoreInfoDialogOpen(true); // Open dialog only if info is available
       } else {
-        showError("No store information available for this aquarium. Please add it first.");
+        showError(
+          "No store information available for this aquarium. Please add it first."
+        );
       }
     } catch (error) {
       console.error("Error fetching store info:", error);
@@ -344,6 +348,59 @@ const StoreManagement = () => {
     }
   };
 
+  const handleToggleStatus = async (store: Store) => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
+    // Get current user info for verification
+    const currentUser = localStorage.getItem("currentUser");
+    if (!currentUser) {
+      showError("User authentication required. Please login again.");
+      return;
+    }
+
+    try {
+      const user = JSON.parse(currentUser);
+      const isActive = store.status === "ACTIVE";
+      const newStatus = isActive ? "INACTIVE" : "ACTIVE";
+      const action = isActive ? "deactivate" : "activate";
+
+      // Show confirmation dialog with user verification
+      const confirmed = confirm(
+        `Are you sure you want to ${action} the store "${store.aquariumName}"?\n\n` +
+          `Current Status: ${store.status}\n` +
+          `New Status: ${newStatus}\n\n` +
+          `Logged in as: ${user.firstName} ${user.lastName} (${user.email})\n\n` +
+          `Click OK to proceed or Cancel to abort.`
+      );
+
+      if (!confirmed) {
+        return;
+      }
+
+      // Call the appropriate service function
+      const success = isActive
+        ? await deactivateStore(store.id, token)
+        : await activateStore(store.id, token);
+
+      if (success) {
+        showSuccess(
+          `Store "${store.aquariumName}" ${action}d successfully! Status changed to ${newStatus}.`
+        );
+        fetchStores(); // Refresh the stores list
+      } else {
+        showError(`Failed to ${action} store.`);
+      }
+    } catch (error) {
+      console.error(`Error toggling store status:`, error);
+      if (error instanceof Error) {
+        showError(`Error toggling store status: ${error.message}`);
+      } else {
+        showError("An error occurred while changing the store status.");
+      }
+    }
+  };
+
   return (
     <Box sx={{ width: "100%", p: 3 }}>
       <Box
@@ -357,7 +414,6 @@ const StoreManagement = () => {
         <Typography variant="h5" fontWeight={600}>
           Store Management
         </Typography>
-        
       </Box>
 
       <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
@@ -410,6 +466,7 @@ const StoreManagement = () => {
           onViewDetails={handleViewStoreDetails}
           onViewFish={handleViewFish}
           onEditInfo={handleEditInfo}
+          onToggleStatus={handleToggleStatus}
           loading={loading}
         />
       </TabPanel>
@@ -417,6 +474,7 @@ const StoreManagement = () => {
         <StoreTable
           stores={inactiveStores}
           onViewDetails={handleViewStoreDetails}
+          onToggleStatus={handleToggleStatus}
           loading={loading}
         />
       </TabPanel>

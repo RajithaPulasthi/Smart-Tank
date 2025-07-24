@@ -22,6 +22,7 @@ import {
   CheckCircleOutline as CompleteIcon,
   Pets as ViewFishIcon,
   Edit as EditIcon,
+  PowerSettingsNew as ToggleStatusIcon,
 } from "@mui/icons-material";
 import type { Store } from "../../types/Store";
 
@@ -36,6 +37,7 @@ interface StoreTableProps {
   onComplete?: (store: Store) => void;
   onViewFish?: (store: Store) => void;
   onEditInfo?: (store: Store) => void;
+  onToggleStatus?: (store: Store) => void;
   loading?: boolean;
 }
 
@@ -50,6 +52,7 @@ const StoreTable = ({
   onComplete,
   onViewFish,
   onEditInfo,
+  onToggleStatus,
   loading = false,
 }: StoreTableProps) => {
   const getStatusColor = (status: string) => {
@@ -233,6 +236,29 @@ const StoreTable = ({
                           onClick={() => onEditInfo?.(store)}
                         >
                           <EditIcon />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="Deactivate Store">
+                        <IconButton
+                          size="small"
+                          color="warning"
+                          onClick={() => onToggleStatus?.(store)}
+                        >
+                          <ToggleStatusIcon />
+                        </IconButton>
+                      </Tooltip>
+                    </>
+                  )}
+
+                  {store.status === "INACTIVE" && (
+                    <>
+                      <Tooltip title="Activate Store">
+                        <IconButton
+                          size="small"
+                          color="success"
+                          onClick={() => onToggleStatus?.(store)}
+                        >
+                          <ToggleStatusIcon />
                         </IconButton>
                       </Tooltip>
                     </>

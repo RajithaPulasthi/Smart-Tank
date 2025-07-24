@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Login from "../pages/Login/Login";
 import Dashboard from "../pages/Dashboard/Dashboard";
 import StorePage from "../pages/Store/Store";
+import FishPage from "../pages/Fish/FishPage";
 import ProtectedLayout from "../layout/ProtectedLayout";
 
 const isAuthenticated = () => {
@@ -37,6 +38,16 @@ const AppRoutes = () => (
           <PrivateRoute>
             <ProtectedLayout>
               <StorePage />
+            </ProtectedLayout>
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/fish"
+        element={
+          <PrivateRoute>
+            <ProtectedLayout>
+              <FishPage />
             </ProtectedLayout>
           </PrivateRoute>
         }

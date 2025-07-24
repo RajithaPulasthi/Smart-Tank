@@ -10,7 +10,7 @@ import {
 } from "@mui/material";
 import { useState, useEffect } from "react";
 // Import both saveUser and saveAdminUser
-import { saveUser } from "../../services/userService";
+import { saveUser, saveAdminUser } from "../../services/userService";
 import type { User } from "../../types/User"; // Ensure this path is correct for your updated User type
 
 type Props = {
@@ -26,7 +26,7 @@ const statusOptions = [
   { label: "Inactive", value: 0 },
 ];
 
-const UserFormDialog = ({ open, onClose, user, onSave }: Props) => {
+const UserFormDialog = ({ open, onClose, user, onSave, userType }: Props) => {
   const [form, setForm] = useState<User>({
     id: 0,
     firstName: "",
@@ -36,7 +36,7 @@ const UserFormDialog = ({ open, onClose, user, onSave }: Props) => {
     password: "",
     address: "",
     status: 1,
-    userType: 1,
+    userType: userType,
   });
 
   useEffect(() => {
@@ -49,7 +49,7 @@ const UserFormDialog = ({ open, onClose, user, onSave }: Props) => {
               ? 1
               : 0
             : user.status,
-        userType: user.userType ?? 1,
+        userType: user.userType ?? userType,
       });
     } else {
       setForm({
@@ -61,10 +61,10 @@ const UserFormDialog = ({ open, onClose, user, onSave }: Props) => {
         password: "",
         address: "",
         status: 1,
-        userType: 1,
+        userType: userType,
       });
     }
-  }, [user]);
+  }, [user, userType]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -78,16 +78,23 @@ const UserFormDialog = ({ open, onClose, user, onSave }: Props) => {
   const handleSubmit = async () => {
     const token = localStorage.getItem("token");
     if (!token) return;
+
+    // Use saveAdminUser for creating new Store Admins, otherwise use saveUser
+    const isNewStoreAdmin = !user && userType === 2;
+    const saveFunction = isNewStoreAdmin ? saveAdminUser : saveUser;
+
     const payload: Partial<User> = {
       ...form,
       status: form.status,
       userType: form.userType,
     };
+
     if (user && !form.password) {
       // Only delete if password is present and optional
       (payload as Partial<User>).password = undefined;
     }
-    const success = await saveUser(payload as User, token);
+
+    const success = await saveFunction(payload as User, token);
     if (success) {
       onSave(payload as User);
       onClose();
@@ -157,8 +164,10 @@ const UserFormDialog = ({ open, onClose, user, onSave }: Props) => {
             name="userType"
             value={form.userType}
             onChange={handleChange}
+            disabled={!!user} // Disable editing user type for existing users
           >
             <MenuItem value={1}>Admin</MenuItem>
+            <MenuItem value={2}>Store Admin</MenuItem>
             <MenuItem value={0}>User</MenuItem>
           </TextField>
         </Box>

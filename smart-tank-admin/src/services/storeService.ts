@@ -87,6 +87,38 @@ export const rejectStore = async (
   return res.ok;
 };
 
+export const activateStore = async (
+  storeId: number,
+  token: string
+): Promise<boolean> => {
+  const res = await fetch(`${API_BASE}/status/${storeId}`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ status: "ACTIVE" }),
+  });
+
+  return res.ok;
+};
+
+export const deactivateStore = async (
+  storeId: number,
+  token: string
+): Promise<boolean> => {
+  const res = await fetch(`${API_BASE}/status/${storeId}`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ status: "INACTIVE" }),
+  });
+
+  return res.ok;
+};
+
 export const getStoreById = async (
   storeId: number,
   token: string
