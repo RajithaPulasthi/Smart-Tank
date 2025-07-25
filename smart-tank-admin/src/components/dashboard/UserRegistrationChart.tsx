@@ -13,7 +13,15 @@ import {
   type AquariumRegistrationStats,
 } from "../../services/storeService";
 
-const UserRegistrationChart = () => {
+interface UserRegistrationChartProps {
+  startDate: string;
+  endDate: string;
+}
+
+const UserRegistrationChart = ({
+  startDate,
+  endDate,
+}: UserRegistrationChartProps) => {
   const [data, setData] = useState<AquariumRegistrationStats[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -24,7 +32,11 @@ const UserRegistrationChart = () => {
 
       try {
         setLoading(true);
-        const stats = await getAquariumRegistrationStats(token, 7);
+        const stats = await getAquariumRegistrationStats(
+          token,
+          startDate,
+          endDate
+        );
         setData(stats);
       } catch (error) {
         console.error("Error fetching registration stats:", error);
@@ -45,12 +57,12 @@ const UserRegistrationChart = () => {
     };
 
     fetchRegistrationData();
-  }, []);
+  }, [startDate, endDate]);
 
   return (
     <Paper elevation={3} sx={{ p: 2 }}>
       <Typography variant="h6" fontWeight="bold" mb={2}>
-        Aquarium Registrations (Last 7 Days)
+        Aquarium Registrations
       </Typography>
       {loading ? (
         <Box

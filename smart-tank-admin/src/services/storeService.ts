@@ -53,36 +53,34 @@ export const getRejectedStores = async (token: string): Promise<Store[]> => {
 };
 
 // Get aquarium registration statistics by date range
-export interface AquariumRegistrationStats {
-  date: string;
-  count: number;
-}
-
 export const getAquariumRegistrationStats = async (
   token: string,
-  days: number = 7
+  startDate: string,
+  endDate: string
 ): Promise<AquariumRegistrationStats[]> => {
   try {
     const stores = await getAllStores(token);
     
-    // Generate date range for the last 'days' days
-    const dateMap = new Map<string, number>();
-    const today = new Date();
+    const start = new Date(startDate);
+    const end = new Date(endDate);
     
-    for (let i = days - 1; i >= 0; i--) {
-      const date = new Date(today);
-      date.setDate(date.getDate() - i);
-      const dateKey = date.toLocaleDateString('en-GB', { 
+    // Generate date range
+    const dateMap = new Map<string, number>();
+    const currentDate = new Date(start);
+    
+    while (currentDate <= end) {
+      const dateKey = currentDate.toLocaleDateString('en-GB', { 
         day: '2-digit', 
         month: '2-digit' 
       });
       dateMap.set(dateKey, 0);
+      currentDate.setDate(currentDate.getDate() + 1);
     }
     
     // Count registrations by date
     stores.forEach(store => {
-      if (store.createdDate) {
-        const storeDate = new Date(store.createdDate);
+      if (store.createdAt) {
+        const storeDate = new Date(store.createdAt);
         const dateKey = storeDate.toLocaleDateString('en-GB', { 
           day: '2-digit', 
           month: '2-digit' 
@@ -103,16 +101,17 @@ export const getAquariumRegistrationStats = async (
     console.error("Error fetching aquarium registration stats:", error);
     // Return dummy data if API fails
     const dateMap = new Map<string, number>();
-    const today = new Date();
-    
-    for (let i = days - 1; i >= 0; i--) {
-      const date = new Date(today);
-      date.setDate(date.getDate() - i);
-      const dateKey = date.toLocaleDateString('en-GB', { 
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    const currentDate = new Date(start);
+
+    while (currentDate <= end) {
+      const dateKey = currentDate.toLocaleDateString('en-GB', { 
         day: '2-digit', 
         month: '2-digit' 
       });
       dateMap.set(dateKey, Math.floor(Math.random() * 10));
+      currentDate.setDate(currentDate.getDate() + 1);
     }
     
     return Array.from(dateMap.entries()).map(([date, count]) => ({

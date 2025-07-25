@@ -46,7 +46,6 @@ const SidebarLayout = ({ collapsed }: SidebarLayoutProps) => {
       icon: <Settings />,
       children: [
         { label: "User", icon: <People />, path: "/admin/user" },
-        { label: "Device", icon: <AccountTree />, path: "/admin/device" },
         { label: "Permission", icon: <Lock />, path: "/admin/permission" },
       ],
     },
@@ -69,6 +68,7 @@ const SidebarLayout = ({ collapsed }: SidebarLayoutProps) => {
     { label: "Store", icon: <Store />, path: "/store" },
     { label: "Fish", icon: <Pets />, path: "/fish" },
     { label: "Orders", icon: <ShoppingCart />, path: "/orders" },
+    { label: "Device", icon: <AccountTree />, path: "/device" },
   ];
 
   return (

@@ -1,45 +1,88 @@
 import { Box, Typography } from "@mui/material";
 import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import FishService, {
+  type FishDetails,
+} from "../../../../services/fishService";
 
 export interface SmartFishCardProps {
   id: number;
   name: string;
   scientificName?: string;
   image?: string;
-  temp?: number;
-  ph?: number;
-  gh?: number;
-  kh?: number;
-  nitrate?: number;
 }
 
-const SmartFishCard = ({
-  name,
-  scientificName,
-  image,
-  temp,
-  ph,
-  gh,
-  kh,
-  nitrate,
-}: SmartFishCardProps) => {
+const SmartFishCard = ({ name, scientificName, image }: SmartFishCardProps) => {
   const navigate = useNavigate();
+  const [fishData, setFishData] = useState<FishDetails | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Fetch fish data from prediction API
+  useEffect(() => {
+    const fetchFishData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const data = await FishService.getFishDetails(name);
+        setFishData(data);
+      } catch (err) {
+        console.error("Error fetching fish data:", err);
+        setError(
+          err instanceof Error ? err.message : "Failed to fetch fish data"
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchFishData();
+  }, [name]);
+
+  // Use API data if available, otherwise fall back to props
+  const displayName = fishData?.name || name;
+  const displayScientificName = fishData?.binomial_Name || scientificName;
+  const displayImage = fishData?.image_Url || image;
+
+  // Handle image loading with fallback
+  const handleImageError = (e: React.SyntheticEvent<HTMLImageElement>) => {
+    e.currentTarget.src =
+      "https://via.placeholder.com/240x120/00c0ff/ffffff?text=Fish+Image";
+  };
 
   const handleNavigate = () => {
     navigate(`/fish/${name}`); // Use name instead of id for API compatibility
   };
 
-  // Handle image loading with fallback
-  const handleImageError = (e: React.SyntheticEvent<HTMLImageElement>) => {
-    e.currentTarget.src =
-      "https://via.placeholder.com/260x180/00c0ff/ffffff?text=Fish+Image";
-  };
+  // Show loading state
+  if (loading) {
+    return (
+      <Box
+        sx={{
+          width: { xs: 180, sm: 200, md: 200, lg: 240 },
+          maxWidth: "100%",
+          height: 240,
+          borderRadius: 4,
+          background: "rgba(255, 255, 255, 0.05)",
+          backdropFilter: "blur(10px)",
+          border: "1px solid rgba(255, 255, 255, 0.2)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          color: "white",
+        }}
+      >
+        <Typography>Loading...</Typography>
+      </Box>
+    );
+  }
 
   return (
     <Box
       onClick={handleNavigate}
       sx={{
-        width: 260,
+        width: { xs: 180, sm: 200, md: 220, lg: 240 },
+        maxWidth: "100%",
         borderRadius: 4,
         overflow: "hidden",
         background: "rgba(255, 255, 255, 0.05)",
@@ -62,15 +105,15 @@ const SmartFishCard = ({
       <Box
         component="img"
         src={
-          image ||
-          "https://via.placeholder.com/260x180/00c0ff/ffffff?text=Fish+Image"
+          displayImage ||
+          "https://via.placeholder.com/240x120/00c0ff/ffffff?text=Fish+Image"
         }
-        alt={name}
+        alt={displayName}
         onError={handleImageError}
         sx={{
           width: "100%",
-          height: 180,
-          objectFit: "cover",
+          height: 120,
+          objectFit: "contain",
           borderBottom: "1px solid rgba(255, 255, 255, 0.2)",
         }}
       />
@@ -87,69 +130,24 @@ const SmartFishCard = ({
       >
         <Box>
           <Typography variant="h6" fontWeight="bold" sx={{ mb: 1 }}>
-            {name}
+            {displayName}
           </Typography>
-          {scientificName && (
+          {displayScientificName && (
             <Typography
               variant="body2"
               fontStyle="italic"
               sx={{ mb: 2, opacity: 0.8 }}
             >
-              {scientificName}
+              {displayScientificName}
             </Typography>
           )}
-
-          {/* Water Conditions */}
-          {(temp || ph || gh || kh || nitrate) && (
-            <Box sx={{ mb: 1 }}>
-              <Typography
-                variant="body2"
-                fontWeight="bold"
-                sx={{ mb: 1, opacity: 0.9 }}
-              >
-                Water Conditions:
-              </Typography>
-              {temp && (
-                <Typography
-                  variant="caption"
-                  sx={{ display: "block", opacity: 0.8 }}
-                >
-                  Temperature: {temp}°C
-                </Typography>
-              )}
-              {ph && (
-                <Typography
-                  variant="caption"
-                  sx={{ display: "block", opacity: 0.8 }}
-                >
-                  pH: {ph}
-                </Typography>
-              )}
-              {gh && (
-                <Typography
-                  variant="caption"
-                  sx={{ display: "block", opacity: 0.8 }}
-                >
-                  General Hardness: {gh}
-                </Typography>
-              )}
-              {kh && (
-                <Typography
-                  variant="caption"
-                  sx={{ display: "block", opacity: 0.8 }}
-                >
-                  KH: {kh}
-                </Typography>
-              )}
-              {nitrate && (
-                <Typography
-                  variant="caption"
-                  sx={{ display: "block", opacity: 0.8 }}
-                >
-                  Nitrate: {nitrate} ppm
-                </Typography>
-              )}
-            </Box>
+          {error && (
+            <Typography
+              variant="caption"
+              sx={{ color: "rgba(255, 100, 100, 0.8)", fontSize: "0.7rem" }}
+            >
+              Failed to load fish data
+            </Typography>
           )}
         </Box>
       </Box>

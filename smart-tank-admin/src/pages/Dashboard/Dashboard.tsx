@@ -12,6 +12,14 @@ const Dashboard = () => {
     total: 0,
   });
   const [customerCount, setCustomerCount] = useState(0);
+  const [startDate, setStartDate] = useState(() => {
+    const date = new Date();
+    date.setDate(date.getDate() - 7);
+    return date.toISOString().split("T")[0];
+  });
+  const [endDate, setEndDate] = useState(
+    () => new Date().toISOString().split("T")[0]
+  );
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -48,9 +56,14 @@ const Dashboard = () => {
         <StatCard title="Total Stores" value={storeStats.total} />
       </Box>
 
-      <DateRangePicker />
+      <DateRangePicker
+        startDate={startDate}
+        endDate={endDate}
+        onStartDateChange={setStartDate}
+        onEndDateChange={setEndDate}
+      />
       <Box mt={2}>
-        <UserRegistrationChart />
+        <UserRegistrationChart startDate={startDate} endDate={endDate} />
       </Box>
     </Container>
   );

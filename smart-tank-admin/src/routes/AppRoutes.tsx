@@ -9,6 +9,7 @@ import StoreManagement from "../pages/Store/StoreManagement";
 import FishManagement from "../pages/Fish/FishManagement";
 import Orders from "../pages/Orders/Orders";
 import ProtectedLayout from "../layout/ProtectedLayout";
+import DeviceManagement from "../pages/Device/DeviceManagement";
 
 const isAuthenticated = () => {
   const token = localStorage.getItem("token");
@@ -91,6 +92,16 @@ const AppRoutes = () => (
           <PrivateRoute>
             <ProtectedLayout>
               <Orders />
+            </ProtectedLayout>
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/device"
+        element={
+          <PrivateRoute>
+            <ProtectedLayout>
+              <DeviceManagement />
             </ProtectedLayout>
           </PrivateRoute>
         }

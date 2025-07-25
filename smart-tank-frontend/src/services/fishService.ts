@@ -69,13 +69,37 @@ class FishService {
     }
   }
 
+  // Get fish by exact name
+  static async getFishByName(name: string): Promise<FishListItem> {
+    try {
+      const response = await fetch(`${this.API_BASE}/fish/name/${encodeURIComponent(name)}`);
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch fish by name: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error("Error fetching fish by name:", error);
+      throw error;
+    }
+  }
+
   // Search fish by name (filter from all fish)
   static async searchFish(searchTerm: string): Promise<FishListItem[]> {
     try {
-      const allFish = await this.getAllFish();
-      return allFish.filter(fish => 
-        fish.name.toLowerCase().includes(searchTerm.toLowerCase())
-      );
+      // First try to get exact match from the new API
+      try {
+        const exactMatch = await this.getFishByName(searchTerm);
+        return [exactMatch];
+      } catch {
+        // If exact match fails, fall back to filtering all fish
+        const allFish = await this.getAllFish();
+        return allFish.filter(fish => 
+          fish.name.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+      }
     } catch (error) {
       console.error("Error searching fish:", error);
       throw error;
