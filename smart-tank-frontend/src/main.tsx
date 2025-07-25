@@ -19,6 +19,7 @@ import Profile from "./pages/Profile/Profile";
 import SmartSensor from "./pages/SmartSensor/SmartSensor";
 import OrderSensor from "./pages/OrderSensor/OrderSensor";
 import OrderHistory from "./pages/OrderHistory/OrderHistory";
+import TanksPage from "./pages/Tanks/Tanks";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
@@ -40,6 +41,7 @@ createRoot(document.getElementById("root")!).render(
         <Route path="/signin" element={<SignIn />} />
         <Route path="/signup" element={<SignUp />} />
         <Route path="/profile" element={<Profile />} />
+        <Route path="/tanks" element={<TanksPage />} />
       </Routes>
     </BrowserRouter>
   </StrictMode>

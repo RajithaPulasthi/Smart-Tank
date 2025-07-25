@@ -283,6 +283,23 @@ const Profile = () => {
 
           <Divider sx={{ mb: 4 }} />
 
+          <Box sx={{ mb: 4 }}>
+            <Button
+              variant="contained"
+              fullWidth
+              onClick={() => navigate("/tanks")}
+              sx={{
+                mb: 2,
+                background: "linear-gradient(45deg, #ff9800, #f57c00)",
+                "&:hover": {
+                  background: "linear-gradient(45deg, #f57c00, #e65100)",
+                },
+              }}
+            >
+              View My Tanks
+            </Button>
+          </Box>
+
           <Box display="flex" flexDirection="column" gap={3}>
             <SmartTextInput
               label="First Name"
