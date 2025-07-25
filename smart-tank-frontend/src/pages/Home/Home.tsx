@@ -7,6 +7,7 @@ import SmartWhyChooseSection from "../../shared/components/organisms/smartWhyCho
 import SmartSellerCTASection from "../../shared/components/organisms/smartSellerCTAction/SmartSellerCTASection";
 import SmartFeaturedAquariumsSection from "../../shared/components/organisms/smartFeaturedAquariumsSection/SmartFeaturedAquariumsSection";
 import SmartStatsSection from "../../shared/components/organisms/smartStatsSection/SmartStatsSection";
+import SmartSensorCTASection from "../../shared/components/organisms/smartSensorCTASection/SmartSensorCTASection";
 import SmartNewsletterSection from "../../shared/components/organisms/smartNewsletterSection/SmartNewsletterSection";
 import SmartFooter from "../../shared/components/organisms/smartFooter/SmartFooter";
 
@@ -25,6 +26,7 @@ const Home = () => {
       <SmartSellerCTASection />
       <SmartFeaturedAquariumsSection />
       <SmartStatsSection />
+      <SmartSensorCTASection />
       <SmartNewsletterSection />
       <SmartFooter />
     </Box>

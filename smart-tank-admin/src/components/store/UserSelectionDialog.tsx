@@ -96,31 +96,25 @@ const UserSelectionDialog = ({
   }, [open, fetchUsers]);
 
   useEffect(() => {
-    const filtered = users.filter(
-      (user) =>
+    const filtered = users.filter((user) => {
+      // First filter by search term
+      const matchesSearch =
         user.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
         user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.userName.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+        user.userName.toLowerCase().includes(searchTerm.toLowerCase());
+
+      // Then filter out users that are already assigned to other aquariums
+      const isAssignedElsewhere = user.id
+        ? userAssignments.has(user.id)
+        : false;
+
+      return matchesSearch && !isAssignedElsewhere;
+    });
     setFilteredUsers(filtered);
-  }, [searchTerm, users]);
+  }, [searchTerm, users, userAssignments]);
 
   const handleSelect = () => {
     if (selectedUser && selectedUser.id) {
-      const assignedAquarium = userAssignments.get(selectedUser.id);
-
-      if (assignedAquarium) {
-        const confirmSelection = confirm(
-          `This user is already assigned to "${assignedAquarium}".\n\n` +
-            `Proceeding will reassign them to the new aquarium.\n\n` +
-            `Do you want to continue?`
-        );
-
-        if (!confirmSelection) {
-          return;
-        }
-      }
-
       onSelect(selectedUser.id);
       onClose();
     }
@@ -162,13 +156,16 @@ const UserSelectionDialog = ({
             {filteredUsers.length === 0 ? (
               <ListItem>
                 <ListItemText
-                  primary="No users found"
-                  secondary="Try adjusting your search criteria"
+                  primary="No available users found"
+                  secondary={
+                    users.length === 0
+                      ? "No store admin users exist in the system"
+                      : "All store admin users are already assigned to aquariums or don't match your search criteria"
+                  }
                 />
               </ListItem>
             ) : (
               filteredUsers.map((user) => {
-                const assignedAquarium = userAssignments.get(user.id || 0);
                 return (
                   <ListItem key={user.id} disablePadding>
                     <ListItemButton
@@ -185,15 +182,6 @@ const UserSelectionDialog = ({
                             <Typography variant="body2" color="text.secondary">
                               Username: {user.userName}
                             </Typography>
-                            {assignedAquarium && (
-                              <Typography
-                                variant="body2"
-                                color="warning.main"
-                                sx={{ fontWeight: "bold", mt: 0.5 }}
-                              >
-                                ⚠️ Already assigned to: {assignedAquarium}
-                              </Typography>
-                            )}
                           </Box>
                         }
                       />

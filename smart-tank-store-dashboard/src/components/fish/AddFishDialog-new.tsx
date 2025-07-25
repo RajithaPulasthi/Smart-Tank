@@ -18,7 +18,6 @@ import { useSnackbar } from "notistack";
 import {
   getAllFish,
   addFishToAquarium,
-  getFishIdsForAquarium,
   Fish,
 } from "../../services/fishService";
 
@@ -35,7 +34,7 @@ const AddFishDialog = ({
   onSuccess,
   aquariumId,
 }: AddFishDialogProps) => {
-  const [availableFish, setAvailableFish] = useState<Fish[]>([]);
+  const [allFish, setAllFish] = useState<Fish[]>([]);
   const [filteredFish, setFilteredFish] = useState<Fish[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -44,25 +43,14 @@ const AddFishDialog = ({
 
   useEffect(() => {
     if (open) {
-      const fetchAvailableFish = async () => {
+      const fetchAllFish = async () => {
         const token = localStorage.getItem("token");
         if (token) {
           try {
             setLoading(true);
-
-            // Fetch all fish and currently added fish IDs in parallel
-            const [allFishData, currentFishIds] = await Promise.all([
-              getAllFish(token),
-              getFishIdsForAquarium(aquariumId, token),
-            ]);
-
-            // Filter out fish that are already in the aquarium
-            const availableFishData = allFishData.filter(
-              (fish) => !currentFishIds.includes(fish.id)
-            );
-
-            setAvailableFish(availableFishData);
-            setFilteredFish(availableFishData);
+            const data = await getAllFish(token);
+            setAllFish(data);
+            setFilteredFish(data);
           } catch (error) {
             enqueueSnackbar("Failed to fetch fish species.", {
               variant: "error",
@@ -77,17 +65,17 @@ const AddFishDialog = ({
           });
         }
       };
-      fetchAvailableFish();
+      fetchAllFish();
     }
-  }, [open, aquariumId, enqueueSnackbar]);
+  }, [open, enqueueSnackbar]);
 
   useEffect(() => {
     const lowercasedFilter = searchTerm.toLowerCase();
-    const filteredData = availableFish.filter((fish) =>
+    const filteredData = allFish.filter((fish) =>
       fish.name.toLowerCase().includes(lowercasedFilter)
     );
     setFilteredFish(filteredData);
-  }, [searchTerm, availableFish]);
+  }, [searchTerm, allFish]);
 
   const handleAddFish = async (fishId: number) => {
     const token = localStorage.getItem("token");
@@ -207,11 +195,7 @@ const AddFishDialog = ({
                 color="text.secondary"
                 sx={{ textAlign: "center", py: 2 }}
               >
-                {searchTerm
-                  ? "No fish found matching your search."
-                  : availableFish.length === 0
-                  ? "All available fish have been added to your store."
-                  : "No fish available to add."}
+                No fish found matching your search.
               </Typography>
             )}
           </List>

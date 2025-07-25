@@ -16,6 +16,7 @@ import {
 import { Add as AddIcon, Delete as DeleteIcon } from "@mui/icons-material";
 import { useSnackbar } from "notistack";
 import {
+  getAllFish,
   getFishIdsForAquarium,
   getFishById,
   removeFishFromAquarium,

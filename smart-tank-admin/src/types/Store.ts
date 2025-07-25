@@ -11,4 +11,5 @@ export type Store = {
   province: string;
   postalCode: string;
   status: "PENDING" | "APPROVED" | "REJECTED" | "ACTIVE" | "INACTIVE";
+  createdDate?: string; // Optional field for registration date
 };

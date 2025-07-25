@@ -1,24 +1,38 @@
 import { Box, Typography } from "@mui/material";
-import SmartButton from "../../atoms/SmartButtons";
 import { useNavigate } from "react-router-dom";
 
 export interface SmartFishCardProps {
-  id: string;
+  id: number;
   name: string;
-  scientificName: string;
-  image: string;
+  scientificName?: string;
+  image?: string;
+  temp?: number;
+  ph?: number;
+  gh?: number;
+  kh?: number;
+  nitrate?: number;
 }
 
 const SmartFishCard = ({
-  id,
   name,
   scientificName,
   image,
+  temp,
+  ph,
+  gh,
+  kh,
+  nitrate,
 }: SmartFishCardProps) => {
   const navigate = useNavigate();
 
   const handleNavigate = () => {
-    navigate(`/fish/${id}`);
+    navigate(`/fish/${name}`); // Use name instead of id for API compatibility
+  };
+
+  // Handle image loading with fallback
+  const handleImageError = (e: React.SyntheticEvent<HTMLImageElement>) => {
+    e.currentTarget.src =
+      "https://via.placeholder.com/260x180/00c0ff/ffffff?text=Fish+Image";
   };
 
   return (
@@ -47,8 +61,12 @@ const SmartFishCard = ({
       {/* Fish Image */}
       <Box
         component="img"
-        src={image}
+        src={
+          image ||
+          "https://via.placeholder.com/260x180/00c0ff/ffffff?text=Fish+Image"
+        }
         alt={name}
+        onError={handleImageError}
         sx={{
           width: "100%",
           height: 180,
@@ -68,26 +86,72 @@ const SmartFishCard = ({
         }}
       >
         <Box>
-          <Typography variant="h6" fontWeight="bold" sx={{ mb: 0.5 }}>
+          <Typography variant="h6" fontWeight="bold" sx={{ mb: 1 }}>
             {name}
           </Typography>
-          <Typography
-            variant="body2"
-            fontStyle="italic"
-            sx={{ mb: 2, opacity: 0.8 }}
-          >
-            {scientificName}
-          </Typography>
+          {scientificName && (
+            <Typography
+              variant="body2"
+              fontStyle="italic"
+              sx={{ mb: 2, opacity: 0.8 }}
+            >
+              {scientificName}
+            </Typography>
+          )}
+
+          {/* Water Conditions */}
+          {(temp || ph || gh || kh || nitrate) && (
+            <Box sx={{ mb: 1 }}>
+              <Typography
+                variant="body2"
+                fontWeight="bold"
+                sx={{ mb: 1, opacity: 0.9 }}
+              >
+                Water Conditions:
+              </Typography>
+              {temp && (
+                <Typography
+                  variant="caption"
+                  sx={{ display: "block", opacity: 0.8 }}
+                >
+                  Temperature: {temp}°C
+                </Typography>
+              )}
+              {ph && (
+                <Typography
+                  variant="caption"
+                  sx={{ display: "block", opacity: 0.8 }}
+                >
+                  pH: {ph}
+                </Typography>
+              )}
+              {gh && (
+                <Typography
+                  variant="caption"
+                  sx={{ display: "block", opacity: 0.8 }}
+                >
+                  General Hardness: {gh}
+                </Typography>
+              )}
+              {kh && (
+                <Typography
+                  variant="caption"
+                  sx={{ display: "block", opacity: 0.8 }}
+                >
+                  KH: {kh}
+                </Typography>
+              )}
+              {nitrate && (
+                <Typography
+                  variant="caption"
+                  sx={{ display: "block", opacity: 0.8 }}
+                >
+                  Nitrate: {nitrate} ppm
+                </Typography>
+              )}
+            </Box>
+          )}
         </Box>
-        <SmartButton
-          text="More Details"
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation(); // Prevent card's onClick from firing
-            handleNavigate();
-          }}
-          fullWidth
-        />
       </Box>
     </Box>
   );

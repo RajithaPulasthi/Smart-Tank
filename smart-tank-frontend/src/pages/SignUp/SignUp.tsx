@@ -43,7 +43,6 @@ const SignUp = () => {
         ...prev,
         [field]: event.target.value,
       }));
-      // Clear error when user starts typing
       if (error) setError("");
     };
 
@@ -98,7 +97,6 @@ const SignUp = () => {
       setSuccess(true);
       setError("");
 
-      // Redirect to sign in page after successful registration
       setTimeout(() => {
         navigate("/signin", {
           state: {
@@ -124,16 +122,41 @@ const SignUp = () => {
   };
 
   return (
-    <Box sx={{ minHeight: "100vh", backgroundColor: "#f8f9fa", py: 4 }}>
+    <Box
+      sx={{
+        minHeight: "100vh",
+        background:
+          "linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%)",
+        position: "relative",
+        py: 4,
+        "&::before": {
+          content: '""',
+          position: "absolute",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: [
+            "radial-gradient(circle at 20% 20%, rgba(0, 192, 255, 0.1) 0%, transparent 50%)",
+            "radial-gradient(circle at 80% 80%, rgba(0, 119, 255, 0.05) 0%, transparent 50%)",
+          ].join(", "),
+          zIndex: 0,
+        },
+      }}
+    >
       {/* Back to Home Button */}
-      <Box sx={{ position: "absolute", top: 20, left: 20 }}>
+      <Box sx={{ position: "absolute", top: 20, left: 20, zIndex: 2 }}>
         <Button
           startIcon={<ArrowBackIcon />}
           onClick={() => navigate("/")}
           sx={{
-            color: "text.secondary",
+            color: "rgba(255, 255, 255, 0.8)",
             textTransform: "none",
             fontWeight: 500,
+            "&:hover": {
+              color: "#00c0ff",
+              background: "rgba(0, 192, 255, 0.1)",
+            },
           }}
         >
           Back to Home
@@ -148,27 +171,45 @@ const SignUp = () => {
           justifyContent: "center",
           minHeight: "100vh",
           px: 2,
+          position: "relative",
+          zIndex: 1,
         }}
       >
         <Box
           sx={{
             width: "100%",
-            maxWidth: 420,
-            backgroundColor: "white",
-            borderRadius: 3,
-            boxShadow: "0 8px 32px rgba(0,0,0,0.1)",
-            border: "2px solid #e0e0e0",
-            p: 4,
+            maxWidth: 480,
+            backgroundColor: "rgba(255, 255, 255, 0.95)",
+            borderRadius: 4,
+            boxShadow: "0 20px 60px rgba(0, 0, 0, 0.3)",
+            border: "1px solid rgba(0, 192, 255, 0.2)",
+            p: 5,
             textAlign: "center",
+            backdropFilter: "blur(10px)",
           }}
         >
-          <Typography
-            variant="h5"
-            fontWeight="bold"
-            sx={{ mb: 4, color: "#1a1a1a" }}
-          >
-            Create Account
-          </Typography>
+          {/* Smart Tank Logo/Title */}
+          <Box sx={{ mb: 4 }}>
+            <Typography
+              variant="h4"
+              fontWeight="bold"
+              sx={{
+                background: "linear-gradient(45deg, #00c0ff, #0077ff)",
+                backgroundClip: "text",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                mb: 1,
+              }}
+            >
+              Smart Tank
+            </Typography>
+            <Typography variant="h6" sx={{ color: "#1e293b", fontWeight: 600 }}>
+              Create Your Account
+            </Typography>
+            <Typography variant="body2" sx={{ color: "#64748b", mt: 1 }}>
+              Join the Smart Tank community today
+            </Typography>
+          </Box>
 
           <Box component="form" onSubmit={handleSubmit} sx={{ width: "100%" }}>
             {error && (
@@ -183,7 +224,7 @@ const SignUp = () => {
               </Alert>
             )}
 
-            <Box sx={{ display: "flex", gap: 1, mb: 2 }}>
+            <Box sx={{ display: "flex", gap: 2, mb: 2 }}>
               <SmartTextInput
                 label="First Name"
                 fullWidth
@@ -193,7 +234,7 @@ const SignUp = () => {
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
-                      <PersonIcon sx={{ color: "action.active" }} />
+                      <PersonIcon sx={{ color: "#00c0ff" }} />
                     </InputAdornment>
                   ),
                 }}
@@ -201,37 +242,75 @@ const SignUp = () => {
                 autoComplete="given-name"
                 sx={{
                   "& .MuiOutlinedInput-root": {
-                    borderRadius: 2,
-                    backgroundColor: "#fafafa",
+                    borderRadius: 3,
+                    backgroundColor: "#f8fafc",
+                    border: "2px solid #e2e8f0",
+                    "&:hover": {
+                      borderColor: "#00c0ff",
+                    },
+                    "&.Mui-focused": {
+                      borderColor: "#00c0ff",
+                      boxShadow: "0 0 0 3px rgba(0, 192, 255, 0.1)",
+                    },
+                  },
+                  "& .MuiInputLabel-root": {
+                    color: "#64748b",
+                    fontWeight: 500,
+                    "&.Mui-focused": {
+                      color: "#00c0ff",
+                    },
+                  },
+                  "& .MuiOutlinedInput-input": {
+                    color: "#1e293b",
+                  },
+                  "& .MuiOutlinedInput-input::placeholder": {
+                    color: "#94a3b8",
+                    opacity: 1,
                   },
                 }}
               />
+
               <SmartTextInput
                 label="Last Name"
                 fullWidth
                 margin="normal"
                 value={formData.lastName}
                 onChange={handleInputChange("lastName")}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <PersonIcon sx={{ color: "action.active" }} />
-                    </InputAdornment>
-                  ),
-                }}
                 placeholder="Enter your last name"
                 autoComplete="family-name"
                 sx={{
                   "& .MuiOutlinedInput-root": {
-                    borderRadius: 2,
-                    backgroundColor: "#fafafa",
+                    borderRadius: 3,
+                    backgroundColor: "#f8fafc",
+                    border: "2px solid #e2e8f0",
+                    "&:hover": {
+                      borderColor: "#00c0ff",
+                    },
+                    "&.Mui-focused": {
+                      borderColor: "#00c0ff",
+                      boxShadow: "0 0 0 3px rgba(0, 192, 255, 0.1)",
+                    },
+                  },
+                  "& .MuiInputLabel-root": {
+                    color: "#64748b",
+                    fontWeight: 500,
+                    "&.Mui-focused": {
+                      color: "#00c0ff",
+                    },
+                  },
+                  "& .MuiOutlinedInput-input": {
+                    color: "#1e293b",
+                  },
+                  "& .MuiOutlinedInput-input::placeholder": {
+                    color: "#94a3b8",
+                    opacity: 1,
                   },
                 }}
               />
             </Box>
 
             <SmartTextInput
-              label="Email"
+              label="Email Address"
               type="email"
               fullWidth
               margin="normal"
@@ -240,7 +319,7 @@ const SignUp = () => {
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
-                    <EmailIcon sx={{ color: "action.active" }} />
+                    <EmailIcon sx={{ color: "#00c0ff" }} />
                   </InputAdornment>
                 ),
               }}
@@ -249,8 +328,30 @@ const SignUp = () => {
               sx={{
                 mb: 2,
                 "& .MuiOutlinedInput-root": {
-                  borderRadius: 2,
-                  backgroundColor: "#fafafa",
+                  borderRadius: 3,
+                  backgroundColor: "#f8fafc",
+                  border: "2px solid #e2e8f0",
+                  "&:hover": {
+                    borderColor: "#00c0ff",
+                  },
+                  "&.Mui-focused": {
+                    borderColor: "#00c0ff",
+                    boxShadow: "0 0 0 3px rgba(0, 192, 255, 0.1)",
+                  },
+                },
+                "& .MuiInputLabel-root": {
+                  color: "#64748b",
+                  fontWeight: 500,
+                  "&.Mui-focused": {
+                    color: "#00c0ff",
+                  },
+                },
+                "& .MuiOutlinedInput-input": {
+                  color: "#1e293b",
+                },
+                "& .MuiOutlinedInput-input::placeholder": {
+                  color: "#94a3b8",
+                  opacity: 1,
                 },
               }}
             />
@@ -269,19 +370,42 @@ const SignUp = () => {
                       onClick={() => setShowPassword(!showPassword)}
                       edge="end"
                       aria-label="toggle password visibility"
+                      sx={{ color: "#00c0ff" }}
                     >
                       {showPassword ? <VisibilityOff /> : <Visibility />}
                     </IconButton>
                   </InputAdornment>
                 ),
               }}
-              placeholder="Create a password"
+              placeholder="Enter your password"
               autoComplete="new-password"
               sx={{
                 mb: 2,
                 "& .MuiOutlinedInput-root": {
-                  borderRadius: 2,
-                  backgroundColor: "#fafafa",
+                  borderRadius: 3,
+                  backgroundColor: "#f8fafc",
+                  border: "2px solid #e2e8f0",
+                  "&:hover": {
+                    borderColor: "#00c0ff",
+                  },
+                  "&.Mui-focused": {
+                    borderColor: "#00c0ff",
+                    boxShadow: "0 0 0 3px rgba(0, 192, 255, 0.1)",
+                  },
+                },
+                "& .MuiInputLabel-root": {
+                  color: "#64748b",
+                  fontWeight: 500,
+                  "&.Mui-focused": {
+                    color: "#00c0ff",
+                  },
+                },
+                "& .MuiOutlinedInput-input": {
+                  color: "#1e293b",
+                },
+                "& .MuiOutlinedInput-input::placeholder": {
+                  color: "#94a3b8",
+                  opacity: 1,
                 },
               }}
             />
@@ -302,6 +426,7 @@ const SignUp = () => {
                       }
                       edge="end"
                       aria-label="toggle confirm password visibility"
+                      sx={{ color: "#00c0ff" }}
                     >
                       {showConfirmPassword ? <VisibilityOff /> : <Visibility />}
                     </IconButton>
@@ -313,8 +438,30 @@ const SignUp = () => {
               sx={{
                 mb: 3,
                 "& .MuiOutlinedInput-root": {
-                  borderRadius: 2,
-                  backgroundColor: "#fafafa",
+                  borderRadius: 3,
+                  backgroundColor: "#f8fafc",
+                  border: "2px solid #e2e8f0",
+                  "&:hover": {
+                    borderColor: "#00c0ff",
+                  },
+                  "&.Mui-focused": {
+                    borderColor: "#00c0ff",
+                    boxShadow: "0 0 0 3px rgba(0, 192, 255, 0.1)",
+                  },
+                },
+                "& .MuiInputLabel-root": {
+                  color: "#64748b",
+                  fontWeight: 500,
+                  "&.Mui-focused": {
+                    color: "#00c0ff",
+                  },
+                },
+                "& .MuiOutlinedInput-input": {
+                  color: "#1e293b",
+                },
+                "& .MuiOutlinedInput-input::placeholder": {
+                  color: "#94a3b8",
+                  opacity: 1,
                 },
               }}
             />
@@ -326,32 +473,44 @@ const SignUp = () => {
               disabled={loading || success}
               sx={{
                 mb: 3,
-                py: 1.8,
-                borderRadius: 2,
-                textTransform: "uppercase",
-                fontSize: "0.95rem",
+                py: 2,
+                borderRadius: 3,
+                textTransform: "none",
+                fontSize: "1.1rem",
                 fontWeight: 700,
-                letterSpacing: "0.5px",
-                backgroundColor: "#1976d2",
+                background: "linear-gradient(45deg, #00c0ff, #0077ff)",
+                boxShadow: "0 8px 25px rgba(0, 192, 255, 0.3)",
                 "&:hover": {
-                  backgroundColor: "#1565c0",
+                  background: "linear-gradient(45deg, #0077ff, #0056cc)",
+                  boxShadow: "0 12px 35px rgba(0, 192, 255, 0.4)",
+                  transform: "translateY(-2px)",
                 },
                 "&:disabled": {
-                  backgroundColor: "#e0e0e0",
+                  background: "#94a3b8",
+                  boxShadow: "none",
+                  transform: "none",
                 },
+                transition: "all 0.3s ease",
               }}
             >
               {loading ? (
-                <CircularProgress size={24} color="inherit" />
+                <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                  <CircularProgress size={20} color="inherit" />
+                  Creating Account...
+                </Box>
               ) : success ? (
                 "Account Created!"
               ) : (
-                "SIGN UP"
+                "Create Account"
               )}
             </Button>
 
             <Divider sx={{ my: 3 }}>
-              <Typography variant="body2" color="text.secondary" sx={{ px: 2 }}>
+              <Typography
+                variant="body2"
+                color="#64748b"
+                sx={{ px: 2, fontWeight: 500 }}
+              >
                 OR
               </Typography>
             </Divider>
@@ -364,27 +523,35 @@ const SignUp = () => {
               disabled={loading || success}
               sx={{
                 mb: 4,
-                py: 1.8,
-                borderRadius: 2,
+                py: 2,
+                borderRadius: 3,
                 textTransform: "none",
                 fontSize: "1rem",
                 fontWeight: 600,
-                borderColor: "#db4437",
-                color: "#db4437",
+                borderColor: "#e2e8f0",
+                color: "#64748b",
+                borderWidth: 2,
                 "&:hover": {
-                  borderColor: "#c23321",
-                  backgroundColor: "#fef7f7",
+                  borderColor: "#00c0ff",
+                  backgroundColor: "rgba(0, 192, 255, 0.05)",
+                  color: "#00c0ff",
+                  transform: "translateY(-1px)",
                 },
                 "&:disabled": {
-                  borderColor: "#e0e0e0",
+                  borderColor: "#e2e8f0",
                   color: "#9e9e9e",
                 },
+                transition: "all 0.3s ease",
               }}
             >
-              Sign up with Google
+              Continue with Google
             </Button>
 
-            <Typography variant="body2" color="text.secondary">
+            <Typography
+              variant="body1"
+              color="#64748b"
+              sx={{ fontWeight: 500 }}
+            >
               Already have an account?{" "}
               <Link
                 component="button"
@@ -392,14 +559,15 @@ const SignUp = () => {
                 onClick={() => navigate("/signin")}
                 sx={{
                   textDecoration: "none",
-                  color: "primary.main",
-                  fontWeight: 600,
+                  color: "#00c0ff",
+                  fontWeight: 700,
                   "&:hover": {
                     textDecoration: "underline",
+                    color: "#0077ff",
                   },
                 }}
               >
-                Sign in
+                Sign in here
               </Link>
             </Typography>
           </Box>

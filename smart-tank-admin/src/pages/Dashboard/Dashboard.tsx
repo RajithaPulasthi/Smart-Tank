@@ -3,15 +3,15 @@ import { useState, useEffect } from "react";
 import StatCard from "../../components/dashboard/StatCard";
 import UserRegistrationChart from "../../components/dashboard/UserRegistrationChart";
 import DateRangePicker from "../../components/dashboard/DateRangePicker";
-import { getApprovedStores, getPendingStores } from "../../services/storeService";
-import { getAllUsers } from "../../services/userService";
+import { getActiveStores, getAllStores } from "../../services/storeService";
+import { getAllCustomers } from "../../services/userService";
 
 const Dashboard = () => {
   const [storeStats, setStoreStats] = useState({
-    approved: 0,
-    pending: 0,
+    active: 0,
+    total: 0,
   });
-  const [userCount, setUserCount] = useState(0);
+  const [customerCount, setCustomerCount] = useState(0);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -19,17 +19,17 @@ const Dashboard = () => {
       if (!token) return;
 
       try {
-        const [approvedStores, pendingStores, users] = await Promise.all([
-          getApprovedStores(token),
-          getPendingStores(token),
-          getAllUsers(token),
+        const [activeStores, allStores, customers] = await Promise.all([
+          getActiveStores(token),
+          getAllStores(token),
+          getAllCustomers(token),
         ]);
 
         setStoreStats({
-          approved: approvedStores.length,
-          pending: pendingStores.length,
+          active: activeStores.length,
+          total: allStores.length,
         });
-        setUserCount(users.length);
+        setCustomerCount(customers.length);
       } catch (error) {
         console.error("Error fetching dashboard data:", error);
       }
@@ -43,9 +43,9 @@ const Dashboard = () => {
       <Box display="flex" flexWrap="wrap" gap={2} mb={3}>
         <StatCard title="Total Fish Count" value={140} />
         <StatCard title="Active Devices" value={358} />
-        <StatCard title="Users" value={userCount} />
-        <StatCard title="Approved Stores" value={storeStats.approved} />
-        <StatCard title="Pending Stores" value={storeStats.pending} />
+        <StatCard title="Customers" value={customerCount} />
+        <StatCard title="Active Stores" value={storeStats.active} />
+        <StatCard title="Total Stores" value={storeStats.total} />
       </Box>
 
       <DateRangePicker />

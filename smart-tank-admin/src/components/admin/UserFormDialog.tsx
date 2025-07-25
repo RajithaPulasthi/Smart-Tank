@@ -11,6 +11,7 @@ import {
 import { useState, useEffect } from "react";
 // Import both saveUser and saveAdminUser
 import { saveUser, saveAdminUser } from "../../services/userService";
+import { useNotification } from "../../hooks/useNotification";
 import type { User } from "../../types/User"; // Ensure this path is correct for your updated User type
 
 type Props = {
@@ -27,6 +28,7 @@ const statusOptions = [
 ];
 
 const UserFormDialog = ({ open, onClose, user, onSave, userType }: Props) => {
+  const { showSuccess, showError } = useNotification();
   const [form, setForm] = useState<User>({
     id: 0,
     firstName: "",
@@ -79,25 +81,39 @@ const UserFormDialog = ({ open, onClose, user, onSave, userType }: Props) => {
     const token = localStorage.getItem("token");
     if (!token) return;
 
-    // Use saveAdminUser for creating new Store Admins, otherwise use saveUser
-    const isNewStoreAdmin = !user && userType === 2;
-    const saveFunction = isNewStoreAdmin ? saveAdminUser : saveUser;
+    try {
+      // Use saveAdminUser for creating new Store Admins, otherwise use saveUser
+      const isNewStoreAdmin = !user && userType === 2;
+      const saveFunction = isNewStoreAdmin ? saveAdminUser : saveUser;
 
-    const payload: Partial<User> = {
-      ...form,
-      status: form.status,
-      userType: form.userType,
-    };
+      const payload: Partial<User> = {
+        ...form,
+        status: form.status,
+        userType: form.userType,
+      };
 
-    if (user && !form.password) {
-      // Only delete if password is present and optional
-      (payload as Partial<User>).password = undefined;
-    }
+      if (user && !form.password) {
+        // Only delete if password is present and optional
+        (payload as Partial<User>).password = undefined;
+      }
 
-    const success = await saveFunction(payload as User, token);
-    if (success) {
-      onSave(payload as User);
-      onClose();
+      const success = await saveFunction(payload as User, token);
+      if (success) {
+        showSuccess(
+          isNewStoreAdmin
+            ? `Store Admin "${form.firstName} ${form.lastName}" created successfully!`
+            : `User "${form.firstName} ${form.lastName}" saved successfully!`
+        );
+        onSave(payload as User);
+        onClose();
+      }
+    } catch (error) {
+      console.error("Error saving user:", error);
+      if (error instanceof Error) {
+        showError(error.message);
+      } else {
+        showError("An unexpected error occurred while saving the user.");
+      }
     }
   };
 

@@ -1,39 +1,27 @@
 // src/services/fishService.ts
 
-const API_BASE_URL = "http://localhost:8082/api/Aquariums/Aquarium-fish";
-const ALL_FISH_API_URL = "http://localhost:8081/api/Fish";
-
-export interface AquariumFish {
-  id: number;
-  fishId: number;
-  aquariumId: number;
-  fishName: string;
-  fishImage: string;
-}
+const FISH_API_BASE_URL = "http://localhost:8083/api/Aquariums/fish";
+const AQUARIUM_FISH_API_BASE_URL = "http://localhost:8082/api/Aquariums/Aquarium-fish";
+const AQUARIUM_API_BASE_URL = "http://localhost:8082/api/Aquariums";
 
 export interface Fish {
   id: number;
   name: string;
-  image: string;
+  temp: number;
+  ph: number;
+  gh: number;
+  kh: number;
+  nitrate: number;
 }
 
-export const getFishForAquarium = async (
-  aquariumId: number,
-  token: string
-): Promise<AquariumFish[]> => {
-  const response = await fetch(`${API_BASE_URL}/${aquariumId}`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
-  if (!response.ok) {
-    throw new Error("Failed to fetch fish for aquarium");
-  }
-  return response.json();
-};
+export interface AquariumFish {
+  fishId: number;
+  aquariumId: number;
+}
 
+// Get all available fish
 export const getAllFish = async (token: string): Promise<Fish[]> => {
-  const response = await fetch(`${ALL_FISH_API_URL}/all`, {
+  const response = await fetch(`${FISH_API_BASE_URL}`, {
     headers: {
       Authorization: `Bearer ${token}`,
     },
@@ -44,12 +32,42 @@ export const getAllFish = async (token: string): Promise<Fish[]> => {
   return response.json();
 };
 
+// Get specific fish details by ID
+export const getFishById = async (fishId: number, token: string): Promise<Fish> => {
+  const response = await fetch(`${FISH_API_BASE_URL}/${fishId}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  if (!response.ok) {
+    throw new Error("Failed to fetch fish details");
+  }
+  return response.json();
+};
+
+// Get fish IDs for a specific aquarium
+export const getFishIdsForAquarium = async (
+  aquariumId: number,
+  token: string
+): Promise<number[]> => {
+  const response = await fetch(`${AQUARIUM_API_BASE_URL}/fish-ids/${aquariumId}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  if (!response.ok) {
+    throw new Error("Failed to fetch fish IDs for aquarium");
+  }
+  return response.json();
+};
+
+// Add fish to aquarium
 export const addFishToAquarium = async (
   fishId: number,
   aquariumId: number,
   token: string
 ): Promise<void> => {
-  const response = await fetch(`${API_BASE_URL}/add`, {
+  const response = await fetch(`${AQUARIUM_FISH_API_BASE_URL}/add`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -62,11 +80,12 @@ export const addFishToAquarium = async (
   }
 };
 
+// Remove fish from aquarium
 export const removeFishFromAquarium = async (
-  aquariumFishId: number,
+  fishId: number,
   token: string
 ): Promise<void> => {
-  const response = await fetch(`${API_BASE_URL}/delete/${aquariumFishId}`, {
+  const response = await fetch(`${AQUARIUM_FISH_API_BASE_URL}/delete/${fishId}`, {
     method: "DELETE",
     headers: {
       Authorization: `Bearer ${token}`,

@@ -7,6 +7,7 @@ import StoreAdminManagement from "../pages/Users/StoreAdminManagement";
 import Profile from "../pages/Profile/Profile";
 import StoreManagement from "../pages/Store/StoreManagement";
 import FishManagement from "../pages/Fish/FishManagement";
+import Orders from "../pages/Orders/Orders";
 import ProtectedLayout from "../layout/ProtectedLayout";
 
 const isAuthenticated = () => {
@@ -80,6 +81,16 @@ const AppRoutes = () => (
           <PrivateRoute>
             <ProtectedLayout>
               <FishManagement />
+            </ProtectedLayout>
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/orders"
+        element={
+          <PrivateRoute>
+            <ProtectedLayout>
+              <Orders />
             </ProtectedLayout>
           </PrivateRoute>
         }

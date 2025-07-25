@@ -1,23 +1,61 @@
-import { useState } from "react";
-import { Box, Typography, Container } from "@mui/material";
+import { useState, useEffect } from "react";
+import {
+  Box,
+  Typography,
+  Container,
+  CircularProgress,
+  Alert,
+} from "@mui/material";
 import SmartNavbar from "../../shared/components/organisms/smartNavbar";
 import SmartFooter from "../../shared/components/organisms/smartFooter/SmartFooter";
 import SmartAquariumSearchBar from "../../shared/components/organisms/smartAquariumSearchBar/SmartAquariumSearchBar";
 import SmartFishCard from "../../shared/components/molecules/SmartFishCard/SmartFishCard";
-import SmartStoreCard from "../../shared/components/molecules/SmartStoreCard/SmartStoreCard";
 import SmartHorizontalScrollSection from "../../shared/components/organisms/smartHorizontalScrollSection/SmartHorizontalScrollSection";
-import { fishProfiles } from "../../Data/fish.data";
-import { aquariums } from "../../Data/aquarium.data";
+import FishService, { type FishListItem } from "../../services/fishService";
 
 const FindFish = () => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [results, setResults] = useState<typeof fishProfiles>([]);
+  const [allFish, setAllFish] = useState<FishListItem[]>([]);
+  const [results, setResults] = useState<FishListItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [searching, setSearching] = useState(false);
 
-  const handleSearch = () => {
-    const filtered = fishProfiles.filter((fish) =>
-      fish.name.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-    setResults(filtered);
+  // Load all fish on component mount
+  useEffect(() => {
+    const loadAllFish = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const fishData = await FishService.getAllFish();
+        setAllFish(fishData);
+      } catch (err) {
+        console.error("Error loading fish:", err);
+        setError("Failed to load fish data. Please try again later.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadAllFish();
+  }, []);
+
+  const handleSearch = async () => {
+    if (!searchTerm.trim()) {
+      setResults([]);
+      return;
+    }
+
+    try {
+      setSearching(true);
+      const searchResults = await FishService.searchFish(searchTerm);
+      setResults(searchResults);
+    } catch (err) {
+      console.error("Error searching fish:", err);
+      setError("Failed to search fish. Please try again.");
+    } finally {
+      setSearching(false);
+    }
   };
 
   return (
@@ -47,87 +85,129 @@ const FindFish = () => {
           </Typography>
         </Box>
 
-        <SmartAquariumSearchBar
-          placeholder="Enter a fish name"
-          value={searchTerm}
-          onChange={setSearchTerm}
-          onSubmit={handleSearch}
-        />
-
-        {/* Show results when searched */}
-        {results.length > 0 && (
-          <Box sx={{ my: 4 }}>
-            <Typography
-              variant="h5"
-              fontWeight="bold"
-              sx={{ color: "white", mb: 2 }}
-            >
-              {results.length} results for "{searchTerm}"
-            </Typography>
-            <Box
-              sx={{
-                display: "flex",
-                gap: 3,
-                flexWrap: "wrap",
-                justifyContent: "center",
-              }}
-            >
-              {results.map((fish) => (
-                <SmartFishCard
-                  key={fish.id}
-                  id={fish.id}
-                  name={fish.name}
-                  scientificName={fish.scientificName}
-                  image={fish.image}
-                />
-              ))}
-            </Box>
-          </Box>
+        {/* Error Alert */}
+        {error && (
+          <Alert severity="error" sx={{ mb: 3 }}>
+            {error}
+          </Alert>
         )}
 
-        {/* Static Scroll Sections */}
-        <SmartHorizontalScrollSection<(typeof fishProfiles)[0]>
-          title="Featured Fish"
-          items={fishProfiles.slice(0, 5)}
-          renderItem={(fish) => (
-            <SmartFishCard
-              key={fish.id}
-              id={fish.id}
-              name={fish.name}
-              scientificName={fish.scientificName}
-              image={fish.image}
+        {/* Loading State */}
+        {loading ? (
+          <Box sx={{ display: "flex", justifyContent: "center", my: 4 }}>
+            <CircularProgress sx={{ color: "white" }} />
+          </Box>
+        ) : (
+          <>
+            <SmartAquariumSearchBar
+              placeholder="Enter a fish name"
+              value={searchTerm}
+              onChange={setSearchTerm}
+              onSubmit={handleSearch}
             />
-          )}
-        />
 
-        <SmartHorizontalScrollSection
-          title="Most Popular Choices"
-          items={fishProfiles.slice(1, 6)}
-          renderItem={(fish) => (
-            <SmartFishCard
-              key={fish.id}
-              id={fish.id}
-              name={fish.name}
-              scientificName={fish.scientificName}
-              image={fish.image}
-            />
-          )}
-        />
+            {/* Show search results */}
+            {results.length > 0 && (
+              <Box sx={{ my: 4 }}>
+                <Typography
+                  variant="h5"
+                  fontWeight="bold"
+                  sx={{ color: "white", mb: 2 }}
+                >
+                  {results.length} results for "{searchTerm}"
+                </Typography>
+                <Box
+                  sx={{
+                    display: "flex",
+                    gap: 3,
+                    flexWrap: "wrap",
+                    justifyContent: "center",
+                  }}
+                >
+                  {results.map((fish) => (
+                    <SmartFishCard
+                      key={fish.id}
+                      id={fish.id}
+                      name={fish.name}
+                      temp={fish.temp}
+                      ph={fish.ph}
+                      gh={fish.gh}
+                      kh={fish.kh}
+                      nitrate={fish.nitrate}
+                    />
+                  ))}
+                </Box>
+              </Box>
+            )}
 
-        {/* Reuse Aquarium Scroll Section */}
-        <SmartHorizontalScrollSection
-          title="Featured Local Aquariums"
-          items={aquariums.slice(0, 5)}
-          renderItem={(store) => (
-            <SmartStoreCard
-              key={store.id}
-              id={store.id}
-              imageSrc={store.bannerImage}
-              title={store.name}
-              location={store.address}
+            {/* Show no results message */}
+            {searchTerm && !searching && results.length === 0 && (
+              <Box sx={{ textAlign: "center", my: 4 }}>
+                <Typography variant="h6" sx={{ color: "white", opacity: 0.8 }}>
+                  No fish found for "{searchTerm}"
+                </Typography>
+              </Box>
+            )}
+
+            {/* Featured Fish Section */}
+            {allFish.length > 0 && (
+              <SmartHorizontalScrollSection<FishListItem>
+                title="Featured Fish"
+                items={allFish.slice(0, 8)}
+                renderItem={(fish) => (
+                  <SmartFishCard
+                    key={fish.id}
+                    id={fish.id}
+                    name={fish.name}
+                    temp={fish.temp}
+                    ph={fish.ph}
+                    gh={fish.gh}
+                    kh={fish.kh}
+                    nitrate={fish.nitrate}
+                  />
+                )}
+              />
+            )}
+
+            {/* Most Popular Choices */}
+            {allFish.length > 1 && (
+              <SmartHorizontalScrollSection<FishListItem>
+                title="Most Popular Choices"
+                items={allFish.slice(1, 9)}
+                renderItem={(fish) => (
+                  <SmartFishCard
+                    key={fish.id}
+                    id={fish.id}
+                    name={fish.name}
+                    temp={fish.temp}
+                    ph={fish.ph}
+                    gh={fish.gh}
+                    kh={fish.kh}
+                    nitrate={fish.nitrate}
+                  />
+                )}
+              />
+            )}
+
+            {/* Featured Local Aquariums */}
+            {/* Featured Local Aquariums - Coming Soon */}
+            {/*
+            <SmartHorizontalScrollSection
+              title="Featured Local Aquariums"
+              items={aquariums.slice(0, 5)}
+              renderItem={(store) => (
+                <SmartStoreCard
+                  key={store.id}
+                  id={store.id}
+                  imageSrc={store.bannerImage}
+                  title={store.name}
+                  location={store.address}
+                />
+              )}
             />
-          )}
-        />
+            */}
+          </>
+        )}
       </Container>
       <SmartFooter />
     </Box>

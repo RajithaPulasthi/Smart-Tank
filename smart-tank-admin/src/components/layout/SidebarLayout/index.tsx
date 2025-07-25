@@ -21,6 +21,7 @@ import {
   Menu,
   AccountTree,
   Lock,
+  ShoppingCart,
 } from "@mui/icons-material";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useState } from "react";
@@ -67,6 +68,7 @@ const SidebarLayout = ({ collapsed }: SidebarLayoutProps) => {
     },
     { label: "Store", icon: <Store />, path: "/store" },
     { label: "Fish", icon: <Pets />, path: "/fish" },
+    { label: "Orders", icon: <ShoppingCart />, path: "/orders" },
   ];
 
   return (

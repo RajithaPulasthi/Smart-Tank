@@ -261,6 +261,9 @@ function SmartNavbar() {
               <MenuItem onClick={handleProfile}>
                 <Typography textAlign="center">Profile</Typography>
               </MenuItem>
+              <MenuItem onClick={() => navigate("/order-history")}>
+                <Typography textAlign="center">Order History</Typography>
+              </MenuItem>
               <MenuItem onClick={handleLogout}>
                 <Typography textAlign="center">Logout</Typography>
               </MenuItem>

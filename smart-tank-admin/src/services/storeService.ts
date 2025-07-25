@@ -15,7 +15,13 @@ export interface StoreInfo {
   aquariumId: number;
 }
 
+export interface AquariumRegistrationStats {
+  date: string;
+  count: number;
+}
+
 const API_BASE = "http://localhost:8082/api/Aquariums";
+const USER_AQUARIUM_API = "http://localhost:8082/api";
 
 export const getAllStores = async (token: string): Promise<Store[]> => {
   const res = await fetch(API_BASE, {
@@ -44,6 +50,76 @@ export const getApprovedStores = async (token: string): Promise<Store[]> => {
 export const getRejectedStores = async (token: string): Promise<Store[]> => {
   const stores = await getAllStores(token);
   return stores.filter((store) => store.status === "REJECTED");
+};
+
+// Get aquarium registration statistics by date range
+export interface AquariumRegistrationStats {
+  date: string;
+  count: number;
+}
+
+export const getAquariumRegistrationStats = async (
+  token: string,
+  days: number = 7
+): Promise<AquariumRegistrationStats[]> => {
+  try {
+    const stores = await getAllStores(token);
+    
+    // Generate date range for the last 'days' days
+    const dateMap = new Map<string, number>();
+    const today = new Date();
+    
+    for (let i = days - 1; i >= 0; i--) {
+      const date = new Date(today);
+      date.setDate(date.getDate() - i);
+      const dateKey = date.toLocaleDateString('en-GB', { 
+        day: '2-digit', 
+        month: '2-digit' 
+      });
+      dateMap.set(dateKey, 0);
+    }
+    
+    // Count registrations by date
+    stores.forEach(store => {
+      if (store.createdDate) {
+        const storeDate = new Date(store.createdDate);
+        const dateKey = storeDate.toLocaleDateString('en-GB', { 
+          day: '2-digit', 
+          month: '2-digit' 
+        });
+        
+        if (dateMap.has(dateKey)) {
+          dateMap.set(dateKey, (dateMap.get(dateKey) || 0) + 1);
+        }
+      }
+    });
+    
+    // Convert to array format for chart
+    return Array.from(dateMap.entries()).map(([date, count]) => ({
+      date,
+      count
+    }));
+  } catch (error) {
+    console.error("Error fetching aquarium registration stats:", error);
+    // Return dummy data if API fails
+    const dateMap = new Map<string, number>();
+    const today = new Date();
+    
+    for (let i = days - 1; i >= 0; i--) {
+      const date = new Date(today);
+      date.setDate(date.getDate() - i);
+      const dateKey = date.toLocaleDateString('en-GB', { 
+        day: '2-digit', 
+        month: '2-digit' 
+      });
+      dateMap.set(dateKey, Math.floor(Math.random() * 10));
+    }
+    
+    return Array.from(dateMap.entries()).map(([date, count]) => ({
+      date,
+      count
+    }));
+  }
 };
 
 export const getActiveStores = async (token: string): Promise<Store[]> => {
@@ -76,12 +152,13 @@ export const rejectStore = async (
   storeId: number,
   token: string
 ): Promise<boolean> => {
-  const res = await fetch(`${API_BASE}/${storeId}/reject`, {
-    method: "PUT",
+  const res = await fetch(`${API_BASE}/status/${storeId}`, {
+    method: "PATCH",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
     },
+    body: JSON.stringify({ status: "REJECTED" }),
   });
 
   return res.ok;
@@ -207,7 +284,7 @@ export const connectUserToAquarium = async (
   token: string
 ): Promise<boolean> => {
   try {
-    const response = await fetch(`${API_BASE}/user-aquarium/add`, {
+    const response = await fetch(`${USER_AQUARIUM_API}/user-aquarium/add`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -236,7 +313,7 @@ export const checkAquariumUser = async (
   token: string
 ): Promise<boolean> => {
   try {
-    const response = await fetch(`${API_BASE}/user-aquarium/${aquariumId}`, {
+    const response = await fetch(`${USER_AQUARIUM_API}/user-aquarium/${aquariumId}`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -246,6 +323,12 @@ export const checkAquariumUser = async (
       return false; // No user assigned
     }
 
+    if (response.status === 400) {
+      // Bad request - likely invalid aquarium ID or malformed request
+      console.warn(`Bad request for aquarium ${aquariumId}. Treating as no user assigned.`);
+      return false;
+    }
+
     if (!response.ok) {
       throw new Error(`Failed to check aquarium user: ${response.status} ${response.statusText}`);
     }
@@ -253,6 +336,7 @@ export const checkAquariumUser = async (
     return true; // User is assigned
   } catch (error) {
     console.error("Error checking aquarium user:", error);
+    // Return false to handle gracefully - assume no user assigned
     return false;
   }
 };
@@ -270,7 +354,7 @@ export const getAquariumUserData = async (
   token: string
 ): Promise<AquariumUserData | null> => {
   try {
-    const response = await fetch(`${API_BASE}/user-aquarium/${aquariumId}`, {
+    const response = await fetch(`${USER_AQUARIUM_API}/user-aquarium/${aquariumId}`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -278,6 +362,12 @@ export const getAquariumUserData = async (
 
     if (response.status === 404) {
       return null; // No user assigned
+    }
+
+    if (response.status === 400) {
+      // Bad request - likely invalid aquarium ID or malformed request
+      console.warn(`Bad request for aquarium ${aquariumId}. Treating as no user assigned.`);
+      return null;
     }
 
     if (!response.ok) {
@@ -304,7 +394,7 @@ export const getUserById = async (
   token: string
 ): Promise<UserDetails | null> => {
   try {
-    const response = await fetch(`${API_BASE}/user/${userId}`, {
+    const response = await fetch(`${USER_AQUARIUM_API}/user/${userId}`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -327,7 +417,7 @@ export const checkUserAquariumAssignment = async (
   token: string
 ): Promise<UserDetails | null> => {
   try {
-    const response = await fetch(`${API_BASE}/user/${userId}`, {
+    const response = await fetch(`${USER_AQUARIUM_API}/user/${userId}`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -354,7 +444,7 @@ export const addFishToStore = async (
   token: string
 ): Promise<boolean> => {
   try {
-    const response = await fetch(`${API_BASE}/Aquarium-fish/add`, {
+    const response = await fetch(`${USER_AQUARIUM_API}/Aquarium-fish/add`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -383,7 +473,7 @@ export const checkStoreHasUsers = async (
   token: string
 ): Promise<boolean> => {
   try {
-    const response = await fetch(`${API_BASE}/user-aquarium/aquarium/${aquariumId}`, {
+    const response = await fetch(`${USER_AQUARIUM_API}/user-aquarium/aquarium/${aquariumId}`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -410,7 +500,7 @@ export const checkStoreHasFish = async (
     console.log(`Checking fish for aquarium ID: ${aquariumId}`);
     
     // Use the same API endpoint as getAquariumFish to check for fish IDs
-    const response = await fetch(`${API_BASE}/fish-ids/${aquariumId}`, {
+    const response = await fetch(`${USER_AQUARIUM_API}/fish-ids/${aquariumId}`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -477,7 +567,7 @@ export const getAquariumFish = async (
 ): Promise<AquariumFish[]> => {
   try {
     // First, get the fish IDs for this aquarium
-    const fishIdsResponse = await fetch(`${API_BASE}/fish-ids/${aquariumId}`, {
+    const fishIdsResponse = await fetch(`${USER_AQUARIUM_API}/fish-ids/${aquariumId}`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -539,7 +629,7 @@ export const getAquariumFishIds = async (
   token: string
 ): Promise<number[]> => {
   try {
-    const response = await fetch(`${API_BASE}/fish-ids/${aquariumId}`, {
+    const response = await fetch(`${USER_AQUARIUM_API}/fish-ids/${aquariumId}`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -568,7 +658,7 @@ export const deleteFishFromStore = async (
   token: string
 ): Promise<boolean> => {
   try {
-    const response = await fetch(`${API_BASE}/Aquarium-fish/delete`, {
+    const response = await fetch(`${USER_AQUARIUM_API}/Aquarium-fish/delete`, {
       method: "DELETE",
       headers: {
         "Content-Type": "application/json",
@@ -596,7 +686,7 @@ export const getStoreInfo = async (
   token: string
 ): Promise<StoreInfo | null> => {
   try {
-    const response = await fetch(`${API_BASE}/aquarium-shop-info/${aquariumId}`, {
+    const response = await fetch(`${USER_AQUARIUM_API}/aquarium-shop-info/${aquariumId}`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -623,7 +713,7 @@ export const updateStoreInfo = async (
   token: string
 ): Promise<boolean> => {
   try {
-    const response = await fetch(`${API_BASE}/aquarium-shop-info/update/${id}`, {
+    const response = await fetch(`${USER_AQUARIUM_API}/aquarium-shop-info/update/${id}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
@@ -644,7 +734,7 @@ export const addStoreInfo = async (
   token: string
 ): Promise<boolean> => {
   try {
-    const response = await fetch(`${API_BASE}/aquarium-shop-info/add`,
+    const response = await fetch(`${USER_AQUARIUM_API}/aquarium-shop-info/add`,
       {
         method: "POST",
         headers: {

@@ -4,11 +4,13 @@ import { getAllFish, addFish } from "../../services/fishService";
 import type { Fish, FishFormData } from "../../types/Fish";
 import FishTable from "../../components/fish/FishTable";
 import FishFormDialog from "../../components/fish/FishFormDialog";
+import FishPredictionDialog from "../../components/fish/FishPredictionDialog";
 
 const FishManagement = () => {
   const [fish, setFish] = useState<Fish[]>([]);
   const [loading, setLoading] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [predictionDialogOpen, setPredictionDialogOpen] = useState(false);
 
   const fetchFish = useCallback(async () => {
     const token = localStorage.getItem("token");
@@ -64,9 +66,18 @@ const FishManagement = () => {
         <Typography variant="h5" fontWeight={600}>
           Fish Management
         </Typography>
-        <Button variant="contained" onClick={() => setDialogOpen(true)}>
-          Add New Fish
-        </Button>
+        <Box sx={{ display: "flex", gap: 2 }}>
+          <Button
+            variant="outlined"
+            onClick={() => setPredictionDialogOpen(true)}
+            sx={{ color: "#1976d2", borderColor: "#1976d2" }}
+          >
+            Predict Fish
+          </Button>
+          <Button variant="contained" onClick={() => setDialogOpen(true)}>
+            Add New Fish
+          </Button>
+        </Box>
       </Box>
 
       <FishTable fish={fish} loading={loading} />
@@ -75,6 +86,11 @@ const FishManagement = () => {
         open={dialogOpen}
         onClose={() => setDialogOpen(false)}
         onSave={handleAddFish}
+      />
+
+      <FishPredictionDialog
+        open={predictionDialogOpen}
+        onClose={() => setPredictionDialogOpen(false)}
       />
     </Box>
   );
