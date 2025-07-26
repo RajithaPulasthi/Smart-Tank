@@ -237,18 +237,6 @@ const StoreManagement = () => {
     if (!token) return;
 
     try {
-      // Check if store has users using the new API endpoint
-      const hasUsers = await checkAquariumUser(store.id, token);
-      if (!hasUsers) {
-        showError(
-          "Cannot complete aquarium: No user connected to this aquarium. Please connect a user first."
-        );
-        return;
-      }
-
-      // Get user assignment details to show in success message
-      const userData = await getAquariumUserData(store.id, token);
-
       // Check if store has fish
       console.log(`Checking fish for aquarium ID: ${store.id}`);
       const hasFish = await checkStoreHasFish(store.id, token);
@@ -261,14 +249,11 @@ const StoreManagement = () => {
         return;
       }
 
-      // Both requirements met, complete the store
+      // Fish requirement met, complete the store
       const success = await completeStore(store.id, token);
       if (success) {
-        const userInfo = userData
-          ? ` (Assigned User ID: ${userData.userId})`
-          : "";
         showSuccess(
-          `Aquarium "${store.aquariumName}" completed successfully! Status changed to Active.${userInfo}`
+          `Aquarium "${store.aquariumName}" completed successfully! Status changed to Active.`
         );
         fetchStores(); // Refresh the stores list
       } else {

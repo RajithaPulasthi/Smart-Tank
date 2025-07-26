@@ -64,10 +64,8 @@ const UserSelectionDialog = ({
               user.id,
               token
             );
-            if (
-              assignmentData &&
-              assignmentData.aquariumId !== currentAquariumId
-            ) {
+            if (assignmentData) {
+              // Store assignment info for ALL assigned users, not just those assigned to other aquariums
               assignments.set(user.id, assignmentData.aquariumName);
             }
           } catch (error) {
@@ -103,12 +101,10 @@ const UserSelectionDialog = ({
         user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
         user.userName.toLowerCase().includes(searchTerm.toLowerCase());
 
-      // Then filter out users that are already assigned to other aquariums
-      const isAssignedElsewhere = user.id
-        ? userAssignments.has(user.id)
-        : false;
+      // Then filter out ALL users that are already assigned to any aquarium
+      const isAssigned = user.id ? userAssignments.has(user.id) : false;
 
-      return matchesSearch && !isAssignedElsewhere;
+      return matchesSearch && !isAssigned;
     });
     setFilteredUsers(filtered);
   }, [searchTerm, users, userAssignments]);

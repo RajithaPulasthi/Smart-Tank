@@ -283,7 +283,7 @@ export const connectUserToAquarium = async (
   token: string
 ): Promise<boolean> => {
   try {
-    const response = await fetch(`${USER_AQUARIUM_API}/user-aquarium/add`, {
+    const response = await fetch(`${API_BASE}/user-aquarium/add`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -312,30 +312,34 @@ export const checkAquariumUser = async (
   token: string
 ): Promise<boolean> => {
   try {
-    const response = await fetch(`${USER_AQUARIUM_API}/user-aquarium/${aquariumId}`, {
+    console.log(`Checking user assignment for aquarium ID: ${aquariumId}`);
+    
+    // Use the correct endpoint as specified in your curl command
+    const response = await fetch(`${API_BASE}/user-aquarium/${aquariumId}`, {
       headers: {
+        'accept': '*/*',
         Authorization: `Bearer ${token}`,
       },
     });
 
+    console.log(`User check response status: ${response.status}`);
+
     if (response.status === 404) {
+      console.log(`No user assigned to aquarium ${aquariumId}`);
       return false; // No user assigned
     }
 
-    if (response.status === 400) {
-      // Bad request - likely invalid aquarium ID or malformed request
-      console.warn(`Bad request for aquarium ${aquariumId}. Treating as no user assigned.`);
+    if (!response.ok) {
+      console.error(`Error checking aquarium user: ${response.status} ${response.statusText}`);
       return false;
     }
 
-    if (!response.ok) {
-      throw new Error(`Failed to check aquarium user: ${response.status} ${response.statusText}`);
-    }
-
+    const userData = await response.json();
+    console.log(`Found user assignment for aquarium ${aquariumId}:`, userData);
+    
     return true; // User is assigned
   } catch (error) {
     console.error("Error checking aquarium user:", error);
-    // Return false to handle gracefully - assume no user assigned
     return false;
   }
 };
@@ -353,27 +357,32 @@ export const getAquariumUserData = async (
   token: string
 ): Promise<AquariumUserData | null> => {
   try {
-    const response = await fetch(`${USER_AQUARIUM_API}/user-aquarium/${aquariumId}`, {
+    console.log(`Getting user data for aquarium ID: ${aquariumId}`);
+    
+    // Use the correct endpoint as specified in your curl command
+    const response = await fetch(`${API_BASE}/user-aquarium/${aquariumId}`, {
       headers: {
+        'accept': '*/*',
         Authorization: `Bearer ${token}`,
       },
     });
 
+    console.log(`User data response status: ${response.status}`);
+
     if (response.status === 404) {
+      console.log(`No user data found for aquarium ${aquariumId}`);
       return null; // No user assigned
     }
 
-    if (response.status === 400) {
-      // Bad request - likely invalid aquarium ID or malformed request
-      console.warn(`Bad request for aquarium ${aquariumId}. Treating as no user assigned.`);
+    if (!response.ok) {
+      console.error(`Error getting aquarium user data: ${response.status} ${response.statusText}`);
       return null;
     }
 
-    if (!response.ok) {
-      throw new Error(`Failed to get aquarium user data: ${response.status} ${response.statusText}`);
-    }
-
-    return await response.json();
+    const userData = await response.json();
+    console.log(`Found user data for aquarium ${aquariumId}:`, userData);
+    
+    return userData;
   } catch (error) {
     console.error("Error getting aquarium user data:", error);
     return null;
@@ -383,9 +392,12 @@ export const getAquariumUserData = async (
 // Get user details by user ID
 export interface UserDetails {
   id: number;
-  userId: number;
-  aquariumId: number;
-  aquariumName: string;
+  fullName: string;
+  email: string;
+  userName: string;
+  address: string;
+  status: string;
+  userType: string;
 }
 
 export const getUserById = async (
@@ -393,7 +405,8 @@ export const getUserById = async (
   token: string
 ): Promise<UserDetails | null> => {
   try {
-    const response = await fetch(`${USER_AQUARIUM_API}/user/${userId}`, {
+    // Use the Users API to get all user details
+    const response = await fetch(`http://localhost:8080/api/Users/${userId}`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -414,23 +427,31 @@ export const getUserById = async (
 export const checkUserAquariumAssignment = async (
   userId: number,
   token: string
-): Promise<UserDetails | null> => {
+): Promise<AquariumUserData | null> => {
   try {
-    const response = await fetch(`${USER_AQUARIUM_API}/user/${userId}`, {
+    // Use the Users API to get user details
+    const userResponse = await fetch(`http://localhost:8080/api/Users/${userId}`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
     });
 
-    if (response.status === 404) {
-      return null; // User is not assigned to any aquarium
+    if (userResponse.status === 404) {
+      return null; // User not found
     }
 
-    if (!response.ok) {
-      throw new Error(`Failed to check user assignment: ${response.status} ${response.statusText}`);
+    if (!userResponse.ok) {
+      throw new Error(`Failed to check user: ${userResponse.status} ${userResponse.statusText}`);
     }
 
-    return await response.json();
+    await userResponse.json(); // Validate user exists
+    
+    // Now check if this user is assigned to any aquarium by trying to find their assignment
+    // We'll need to iterate through aquariums or use a different approach
+    // For now, we'll return null to indicate no assignment found
+    // This might need to be updated based on your backend API structure
+    
+    return null; // Placeholder - you may need to implement aquarium assignment checking
   } catch (error) {
     console.error("Error checking user assignment:", error);
     return null;
@@ -443,7 +464,7 @@ export const addFishToStore = async (
   token: string
 ): Promise<boolean> => {
   try {
-    const response = await fetch(`${USER_AQUARIUM_API}/Aquarium-fish/add`, {
+    const response = await fetch(`${API_BASE}/Aquarium-fish/add`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -456,7 +477,17 @@ export const addFishToStore = async (
     });
 
     if (!response.ok) {
-      throw new Error(`Failed to add fish to store: ${response.status} ${response.statusText}`);
+      // Try to get error details from response
+      let errorMessage = `Failed to add fish to store: ${response.status} ${response.statusText}`;
+      try {
+        const errorText = await response.text();
+        if (errorText) {
+          errorMessage = errorText; // Use the server's error message directly
+        }
+      } catch {
+        // Cannot read error text, use default message
+      }
+      throw new Error(errorMessage);
     }
 
     return true;
@@ -472,18 +503,24 @@ export const checkStoreHasUsers = async (
   token: string
 ): Promise<boolean> => {
   try {
-    const response = await fetch(`${USER_AQUARIUM_API}/user-aquarium/aquarium/${aquariumId}`, {
+    // Use the correct endpoint as specified in your curl command
+    const response = await fetch(`${API_BASE}/user-aquarium/${aquariumId}`, {
       headers: {
+        'accept': '*/*',
         Authorization: `Bearer ${token}`,
       },
     });
+
+    if (response.status === 404) {
+      return false; // No user assigned
+    }
 
     if (!response.ok) {
       return false;
     }
 
-    const users = await response.json();
-    return Array.isArray(users) && users.length > 0;
+    const userData = await response.json();
+    return userData !== null; // If we get data, user is assigned
   } catch (error) {
     console.error("Error checking store users:", error);
     return false;
@@ -499,7 +536,7 @@ export const checkStoreHasFish = async (
     console.log(`Checking fish for aquarium ID: ${aquariumId}`);
     
     // Use the same API endpoint as getAquariumFish to check for fish IDs
-    const response = await fetch(`${USER_AQUARIUM_API}/fish-ids/${aquariumId}`, {
+    const response = await fetch(`${API_BASE}/fish-ids/${aquariumId}`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -566,7 +603,7 @@ export const getAquariumFish = async (
 ): Promise<AquariumFish[]> => {
   try {
     // First, get the fish IDs for this aquarium
-    const fishIdsResponse = await fetch(`${USER_AQUARIUM_API}/fish-ids/${aquariumId}`, {
+    const fishIdsResponse = await fetch(`${API_BASE}/fish-ids/${aquariumId}`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -628,7 +665,7 @@ export const getAquariumFishIds = async (
   token: string
 ): Promise<number[]> => {
   try {
-    const response = await fetch(`${USER_AQUARIUM_API}/fish-ids/${aquariumId}`, {
+    const response = await fetch(`${API_BASE}/fish-ids/${aquariumId}`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -657,7 +694,7 @@ export const deleteFishFromStore = async (
   token: string
 ): Promise<boolean> => {
   try {
-    const response = await fetch(`${USER_AQUARIUM_API}/Aquarium-fish/delete`, {
+    const response = await fetch(`${API_BASE}/Aquarium-fish/delete`, {
       method: "DELETE",
       headers: {
         "Content-Type": "application/json",

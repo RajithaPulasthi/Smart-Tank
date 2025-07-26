@@ -48,7 +48,7 @@ const FishManagementDialog = ({
   aquariumId,
   aquariumName,
 }: FishManagementDialogProps) => {
-  const { showSuccess } = useNotification();
+  const { showSuccess, showError } = useNotification();
   const [availableFish, setAvailableFish] = useState<Fish[]>([]);
   const [aquariumFish, setAquariumFish] = useState<AquariumFish[]>([]);
   const [selectedFishIds, setSelectedFishIds] = useState<string[]>([]);
@@ -121,18 +121,53 @@ const FishManagementDialog = ({
     setError(null);
 
     try {
-      // Add selected fish one by one
-      const addPromises = selectedFishIds.map((fishId) =>
-        addFishToStore(Number(fishId), aquariumId, token)
+      // Add selected fish one by one, handling individual failures
+      const results = await Promise.allSettled(
+        selectedFishIds.map(async (fishId) => {
+          try {
+            await addFishToStore(Number(fishId), aquariumId, token);
+            return { fishId, success: true, error: null };
+          } catch (error) {
+            return {
+              fishId,
+              success: false,
+              error: error instanceof Error ? error.message : "Unknown error",
+            };
+          }
+        })
       );
 
-      await Promise.all(addPromises);
-
-      // Show success message
-      const fishCount = selectedFishIds.length;
-      showSuccess(
-        `Successfully added ${fishCount} fish to the aquarium "${aquariumName}"!`
+      const successResults = results.filter(
+        (result) => result.status === "fulfilled" && result.value.success
       );
+      const failedResults = results.filter(
+        (result) => result.status === "fulfilled" && !result.value.success
+      );
+
+      // Show appropriate messages
+      if (successResults.length > 0) {
+        showSuccess(
+          `Successfully added ${successResults.length} fish to the aquarium "${aquariumName}"!`
+        );
+      }
+
+      if (failedResults.length > 0) {
+        const duplicateErrors = failedResults.filter(
+          (result) =>
+            result.status === "fulfilled" &&
+            result.value.error?.includes("already assigned")
+        );
+
+        if (duplicateErrors.length > 0) {
+          showError(
+            `${duplicateErrors.length} fish were already in this aquarium and were skipped.`
+          );
+        } else {
+          showError(
+            `Failed to add ${failedResults.length} fish. Please try again.`
+          );
+        }
+      }
 
       // Refresh the data and clear selection
       await fetchData();
