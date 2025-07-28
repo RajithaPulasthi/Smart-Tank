@@ -5,7 +5,6 @@ import SmartHeroSection from "../../shared/components/organisms/smartHeroSection
 import SmartHowItWorksSection from "../../shared/components/organisms/smartHowItWorksSection/SmartHowItWorksSection";
 import SmartWhyChooseSection from "../../shared/components/organisms/smartWhyChooseSection/SmartWhyChooseSection";
 import SmartSellerCTASection from "../../shared/components/organisms/smartSellerCTAction/SmartSellerCTASection";
-import SmartFeaturedAquariumsSection from "../../shared/components/organisms/smartFeaturedAquariumsSection/SmartFeaturedAquariumsSection";
 import SmartStatsSection from "../../shared/components/organisms/smartStatsSection/SmartStatsSection";
 import SmartSensorCTASection from "../../shared/components/organisms/smartSensorCTASection/SmartSensorCTASection";
 import SmartNewsletterSection from "../../shared/components/organisms/smartNewsletterSection/SmartNewsletterSection";
@@ -24,7 +23,6 @@ const Home = () => {
       <SmartHowItWorksSection />
       <SmartWhyChooseSection />
       <SmartSellerCTASection />
-      <SmartFeaturedAquariumsSection />
       <SmartStatsSection />
       <SmartSensorCTASection />
       <SmartNewsletterSection />

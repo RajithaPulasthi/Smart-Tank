@@ -1,4 +1,5 @@
 import { Box, Typography, Container } from "@mui/material";
+import { LocationOn, WaterDrop, People, Psychology } from "@mui/icons-material";
 import SmartWhyChooseCard from "../../molecules/smartWhyChoseCard/SmartWhyChooseCard";
 
 const SmartWhyChooseSection = () => {
@@ -73,25 +74,25 @@ const SmartWhyChooseSection = () => {
           }}
         >
           <SmartWhyChooseCard
-            iconSrc="/assets/store-icon.png"
+            icon={<LocationOn sx={{ fontSize: 48, color: "#00c0ff" }} />}
             title="Find Local Fish Sellers Near You Instantly"
             description="Easily discover nearby aquarium stores and fish sellers based on your location. Whether you're looking for rare species or local breeders, our location-based directory helps you connect with trusted sellers in your area—fast, reliable, and hassle-free."
           />
 
           <SmartWhyChooseCard
-            iconSrc="/assets/water-monitor-icon.png"
+            icon={<WaterDrop sx={{ fontSize: 48, color: "#00c0ff" }} />}
             title="Real-Time Water Monitoring"
             description="Track and analyze your tank's water parameters in real time. Receive instant alerts and insights to maintain a healthy environment for your fish."
           />
 
           <SmartWhyChooseCard
-            iconSrc="/assets/community-icon.png"
+            icon={<People sx={{ fontSize: 48, color: "#00c0ff" }} />}
             title="Connect with Fishkeeping Community"
             description="Join a vibrant community of fish enthusiasts. Share experiences, tips, and advice with fellow hobbyists and professionals."
           />
 
           <SmartWhyChooseCard
-            iconSrc="/assets/recommendations-icon.png"
+            icon={<Psychology sx={{ fontSize: 48, color: "#00c0ff" }} />}
             title="Smart Recommendations for Your Tank"
             description="Get AI-powered suggestions on compatible fish species, tank mates, and ideal water conditions based on your tank profile."
           />

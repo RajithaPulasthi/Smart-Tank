@@ -173,9 +173,11 @@ const TanksPage: React.FC = () => {
       try {
         setSelectedTankId(tankId);
         const status = await getLiveStatus(tankId, token);
+        console.log("Live Status Response:", status); // Debug log
         setLiveStatus(status);
         setLiveStatusDialogOpen(true);
-      } catch {
+      } catch (error) {
+        console.error("Failed to fetch live status:", error); // Debug log
         setError("Failed to fetch live status");
       }
     }
@@ -185,8 +187,10 @@ const TanksPage: React.FC = () => {
     if (user && token && selectedTankId) {
       try {
         const status = await getLiveStatus(selectedTankId, token);
+        console.log("Refreshed Live Status Response:", status); // Debug log
         setLiveStatus(status);
-      } catch {
+      } catch (error) {
+        console.error("Failed to refresh live status:", error); // Debug log
         setError("Failed to refresh live status");
       }
     }
@@ -674,16 +678,29 @@ const TanksPage: React.FC = () => {
                       </Typography>
                       <Typography variant="body2">
                         <strong>Status:</strong>{" "}
-                        <Chip label={log.status} size="small" />
+                        <Chip
+                          label={
+                            log.status ? log.status.toUpperCase() : "UNKNOWN"
+                          }
+                          size="small"
+                          color={log.status === "online" ? "success" : "error"}
+                          sx={{ fontWeight: "bold" }}
+                        />
                       </Typography>
                       <Typography variant="body2">
-                        <strong>Temperature:</strong> {log.temperature}°C
+                        <strong>Temperature:</strong>{" "}
+                        {log.temperature
+                          ? parseFloat(log.temperature).toFixed(1)
+                          : "N/A"}
+                        °C
                       </Typography>
                       <Typography variant="body2">
-                        <strong>pH Level:</strong> {log.ph}
+                        <strong>pH Level:</strong>{" "}
+                        {log.ph ? parseFloat(log.ph).toFixed(2) : "N/A"}
                       </Typography>
                       <Typography variant="body2">
-                        <strong>Uptime:</strong> {log.uptime} seconds
+                        <strong>Uptime:</strong>{" "}
+                        {log.uptime ? log.uptime.toLocaleString() : "0"} seconds
                       </Typography>
                       <Typography variant="body2">
                         <strong>Last Seen:</strong>{" "}
@@ -738,7 +755,7 @@ const TanksPage: React.FC = () => {
                     <Box display="flex" alignItems="center" gap={1}>
                       <Typography variant="body1">
                         <strong>Serial Number:</strong>{" "}
-                        {liveStatus.serialNumber}
+                        {liveStatus.serialNumber || "N/A"}
                       </Typography>
                     </Box>
                     <Box display="flex" alignItems="center" gap={1}>
@@ -746,21 +763,37 @@ const TanksPage: React.FC = () => {
                         <strong>Status:</strong>
                       </Typography>
                       <Chip
-                        label={liveStatus.status}
+                        label={
+                          liveStatus.status
+                            ? liveStatus.status.toUpperCase()
+                            : "UNKNOWN"
+                        }
                         size="small"
                         color={
                           liveStatus.status === "online" ? "success" : "error"
                         }
+                        sx={{ fontWeight: "bold" }}
                       />
                     </Box>
                     <Typography variant="body1">
-                      <strong>Temperature:</strong> {liveStatus.temperature}°C
+                      <strong>Temperature:</strong>{" "}
+                      {liveStatus.temperature
+                        ? parseFloat(liveStatus.temperature).toFixed(1)
+                        : "N/A"}
+                      °C
                     </Typography>
                     <Typography variant="body1">
-                      <strong>pH Level:</strong> {liveStatus.ph}
+                      <strong>pH Level:</strong>{" "}
+                      {liveStatus.ph
+                        ? parseFloat(liveStatus.ph).toFixed(2)
+                        : "N/A"}
                     </Typography>
                     <Typography variant="body1">
-                      <strong>Uptime:</strong> {liveStatus.uptime} seconds
+                      <strong>Uptime:</strong>{" "}
+                      {liveStatus.uptime
+                        ? liveStatus.uptime.toLocaleString()
+                        : "0"}{" "}
+                      seconds
                     </Typography>
                     <Typography variant="body1">
                       <strong>Last Seen:</strong>{" "}

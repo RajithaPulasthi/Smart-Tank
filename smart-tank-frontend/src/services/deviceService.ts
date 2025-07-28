@@ -55,13 +55,17 @@ export const getTankLogs = async (tankId: number, token: string): Promise<Device
 };
 
 export const getLiveStatus = async (tankId: number, token: string): Promise<LiveStatus> => {
+  console.log(`Fetching live status for tank ${tankId}`); // Debug log
   const response = await fetch(`${API_URL}/live-statuses/${tankId}`, {
     headers: {
       'Authorization': `Bearer ${token}`,
     },
   });
 
+  console.log(`Response status: ${response.status}, ok: ${response.ok}`); // Debug log
+
   if (!response.ok) {
+    console.log('Response not ok, returning mock data'); // Debug log
     // Return mock data since device is not available
     return {
       "id": null,
@@ -73,5 +77,13 @@ export const getLiveStatus = async (tankId: number, token: string): Promise<Live
       "lastSeen": "2025-07-25T17:13:50.703Z"
     };
   }
-  return response.json();
+  
+  const data = await response.json();
+  console.log('Actual API response data:', data); // Debug log
+  
+  // Check if data is an array and return the first item, otherwise return the data as is
+  const liveStatus = Array.isArray(data) ? data[0] : data;
+  console.log('Processed live status:', liveStatus); // Debug log
+  
+  return liveStatus;
 };

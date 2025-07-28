@@ -80,7 +80,7 @@ const Orders = () => {
     if (!token) return;
 
     // Get current user info for verification
-    const currentUser = localStorage.getItem("currentUser");
+    const currentUser = localStorage.getItem("user");
     if (!currentUser) {
       showError("User authentication required. Please login again.");
       return;
@@ -128,7 +128,7 @@ const Orders = () => {
     if (!token) return;
 
     // Get current user info for verification
-    const currentUser = localStorage.getItem("currentUser");
+    const currentUser = localStorage.getItem("user");
     if (!currentUser) {
       showError("User authentication required. Please login again.");
       return;

@@ -398,45 +398,6 @@ const SmartHeroSection = () => {
         </Typography>
         <ArrowForward sx={{ transform: "rotate(90deg)", fontSize: "1.5rem" }} />
       </Box>
-
-      {/* Slide indicators */}
-      <Box
-        sx={{
-          position: "absolute",
-          bottom: 100,
-          left: "50%",
-          transform: "translateX(-50%)",
-          display: "flex",
-          gap: 2,
-          zIndex: 3,
-        }}
-      >
-        {slides.map((_, index) => (
-          <Box
-            key={index}
-            onClick={() => setCurrentSlide(index)}
-            sx={{
-              width: 12,
-              height: 12,
-              borderRadius: "50%",
-              background:
-                currentSlide === index
-                  ? "linear-gradient(45deg, #00c0ff, #64ffda)"
-                  : "rgba(255, 255, 255, 0.4)",
-              cursor: "pointer",
-              transition: "all 0.3s ease",
-              border: "2px solid rgba(255, 255, 255, 0.3)",
-              "&:hover": {
-                background:
-                  currentSlide === index
-                    ? "linear-gradient(45deg, #00c0ff, #64ffda)"
-                    : "rgba(255, 255, 255, 0.6)",
-                transform: "scale(1.2)",
-              },
-            }}
-          />
-        ))}
-      </Box>
     </Box>
   );
 };
