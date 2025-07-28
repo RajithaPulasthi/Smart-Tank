@@ -38,13 +38,13 @@ const SmartNewsletterSection = () => {
             variant="h4"
             component="h2"
             fontWeight="700"
-            sx={{ mb: 1.5 }}
+            sx={{ mb: 1.5, color: "white" }}
           >
             Join Our Aquatic Community
           </Typography>
           <Typography
             variant="h6"
-            sx={{ mb: 4, opacity: 0.8, fontWeight: 400 }}
+            sx={{ mb: 4, opacity: 0.8, fontWeight: 400, color: "white" }}
           >
             Get exclusive updates, fish care tips, and special offers delivered
             right to your inbox.
@@ -92,7 +92,7 @@ const SmartNewsletterSection = () => {
             />
           </Box>
 
-          <Typography variant="body2" sx={{ opacity: 0.7 }}>
+          <Typography variant="body2" sx={{ opacity: 0.7, color: "white" }}>
             We respect your privacy. Unsubscribe at any time.
           </Typography>
         </Paper>

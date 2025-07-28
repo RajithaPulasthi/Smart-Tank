@@ -65,27 +65,58 @@ export const getAllUsers = async (token: string): Promise<Customer[]> => {
 };
 
 export const saveAdminUser = async (user: User, token: string): Promise<boolean> => {
-  const payload = {
-    firstName: user.firstName,
-    lastName: user.lastName,
-    address: user.address ?? "",
-    email: user.email,
-    userName: user.userName,
-    password: user.password ?? "1234", // default/fallback password
-    userType: 1, // Admin
-    status: 1    // Active
-  };
+  try {
+    const payload = {
+      firstName: user.firstName,
+      lastName: user.lastName,
+      address: user.address ?? "",
+      email: user.email,
+      userName: user.userName,
+      password: user.password ?? "1234", // default/fallback password
+      userType: 2, // Store Admin (corrected from 1)
+      status: 1    // Active
+    };
 
-  const res = await fetch(`${API_BASE}`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify(payload),
-  });
+    const res = await fetch(`${API_BASE}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(payload),
+    });
 
-  return res.ok;
+    if (!res.ok) {
+      if (res.status === 409) {
+        throw new Error("A user with this email or username already exists. Please use different email or username.");
+      }
+      
+      // Try to get the error message from the response
+      let errorMessage = `Failed to create user: ${res.status} ${res.statusText}`;
+      try {
+        const errorData = await res.text();
+        if (errorData) {
+          errorMessage = errorData;
+        }
+      } catch (e) {
+        // If we can't parse the error, use the default message
+      }
+      
+      throw new Error(errorMessage);
+    }
+
+    // Check if the response has content
+    const contentType = res.headers.get("content-type");
+    if (contentType && contentType.includes("application/json")) {
+      const responseData = await res.json();
+      console.log("User created successfully:", responseData);
+    }
+
+    return true;
+  } catch (error) {
+    console.error("Error in saveAdminUser:", error);
+    throw error; // Re-throw the error so it can be handled by the calling component
+  }
 };
 
 export const updateUserStatus = async (
@@ -144,5 +175,19 @@ export const getAllCustomersAndStoreAdmins = async (
   // Filter only Customer and StoreAdmin users
   return data.filter((user) =>
     ["Customer", "StoreAdmin"].includes(user.userType)
+  );
+};
+
+export const getAllCustomers = async (token: string): Promise<Customer[]> => {
+  const users = await getAllUsers(token);
+  return users.filter(
+    (user) => user.userType && user.userType.toLowerCase() === "customer"
+  );
+};
+
+export const getAllStoreAdmins = async (token: string): Promise<Customer[]> => {
+  const users = await getAllUsers(token);
+  return users.filter(
+    (user) => user.userType && user.userType.toLowerCase() === "storeadmin"
   );
 };

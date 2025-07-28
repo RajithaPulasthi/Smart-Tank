@@ -1,20 +1,101 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { Box, Typography, IconButton } from "@mui/material";
+import {
+  Box,
+  Typography,
+  IconButton,
+  CircularProgress,
+  Alert,
+  Container,
+} from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
-import { fishProfiles } from "../../Data/fish.data";
-import { aquariums } from "../../Data/aquarium.data";
+import { useState, useEffect } from "react";
+import FishService, {
+  type FishDetails,
+  type FishListItem,
+} from "../../services/fishService";
 import SmartNavbar from "../../shared/components/organisms/smartNavbar";
 import SmartFooter from "../../shared/components/organisms/smartFooter/SmartFooter";
-import SmartStoreCard from "../../shared/components/molecules/SmartStoreCard/SmartStoreCard";
 
 const FishDetailsPage = () => {
-  const { id } = useParams<{ id: string }>();
+  const { id } = useParams<{ id: string }>(); // This will be the fish name
   const navigate = useNavigate();
+  const [fishDetails, setFishDetails] = useState<FishDetails | null>(null);
+  const [waterConditions, setWaterConditions] = useState<FishListItem | null>(
+    null
+  );
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const fish = fishProfiles.find((f) => f.id === id);
+  useEffect(() => {
+    const loadFishData = async () => {
+      if (!id) {
+        setError("Fish name not provided");
+        setLoading(false);
+        return;
+      }
 
-  if (!fish) {
-    return <Typography>Fish not found.</Typography>;
+      try {
+        setLoading(true);
+        setError(null);
+
+        // Fetch both fish details and water conditions
+        const [details, allFish] = await Promise.all([
+          FishService.getFishDetails(id),
+          FishService.getAllFish(),
+        ]);
+
+        setFishDetails(details);
+
+        // Find water conditions for this specific fish
+        const fishWaterData = allFish.find(
+          (fish) => fish.name.toLowerCase() === id.toLowerCase()
+        );
+        setWaterConditions(fishWaterData || null);
+      } catch (err) {
+        console.error("Error loading fish data:", err);
+        setError("Failed to load fish data. Please try again.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadFishData();
+  }, [id]);
+
+  if (loading) {
+    return (
+      <>
+        <SmartNavbar />
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            minHeight: "50vh",
+          }}
+        >
+          <CircularProgress size={60} />
+        </Box>
+        <SmartFooter />
+      </>
+    );
+  }
+
+  if (error || !fishDetails) {
+    return (
+      <>
+        <SmartNavbar />
+        <Container maxWidth="lg" sx={{ py: 4 }}>
+          <Alert severity="error" sx={{ mb: 3 }}>
+            {error || "Fish not found."}
+          </Alert>
+          <IconButton onClick={() => navigate(-1)} sx={{ mb: 2 }}>
+            <ArrowBackIcon />
+          </IconButton>
+        </Container>
+        <SmartFooter />
+      </>
+    );
   }
 
   return (
@@ -28,7 +109,7 @@ const FishDetailsPage = () => {
             <ArrowBackIcon />
           </IconButton>
           <Typography variant="h5" fontWeight="bold" sx={{ ml: 1 }}>
-            {fish.name}
+            {fishDetails.name}
           </Typography>
         </Box>
 
@@ -47,8 +128,12 @@ const FishDetailsPage = () => {
         >
           <Box
             component="img"
-            src={fish.image}
-            alt={fish.name}
+            src={fishDetails.image_Url}
+            alt={fishDetails.name}
+            onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
+              e.currentTarget.src =
+                "https://via.placeholder.com/240x240/00c0ff/ffffff?text=Fish+Image";
+            }}
             sx={{
               width: 240,
               height: 240,
@@ -57,22 +142,47 @@ const FishDetailsPage = () => {
             }}
           />
           <Box sx={{ minWidth: 260 }}>
-            <Typography>Scientific name – {fish.scientificName}</Typography>
-            <Typography>Relative PH of the water – {fish.ph}</Typography>
-            <Typography>
-              Hardness of water (dKH, dGH) – {fish.hardness}
+            <Typography variant="h6" sx={{ mb: 2, fontWeight: "bold" }}>
+              {fishDetails.name}
             </Typography>
-            <Typography>
-              Temperature in degrees (°C) – {fish.temperature}
+            <Typography sx={{ mb: 3 }}>
+              <strong>Scientific name:</strong> {fishDetails.binomial_Name}
             </Typography>
-            <Typography>Maximum length (cm) – {fish.maxLengthCm}</Typography>
-            <Typography>Feeding habits – {fish.feedingHabits}</Typography>
-            <Typography>Reproduction – {fish.reproduction}</Typography>
-            <Typography>Temperament – {fish.temperament}</Typography>
+
+            {/* Water Conditions */}
+            <Box sx={{ mt: 3 }}>
+              <Typography variant="h6" sx={{ mb: 2, fontWeight: "bold" }}>
+                Water Conditions
+              </Typography>
+              {waterConditions ? (
+                <>
+                  <Typography sx={{ mb: 0.5 }}>
+                    <strong>Temperature:</strong> {waterConditions.temp}°C
+                  </Typography>
+                  <Typography sx={{ mb: 0.5 }}>
+                    <strong>pH:</strong> {waterConditions.ph}
+                  </Typography>
+                  <Typography sx={{ mb: 0.5 }}>
+                    <strong>General Hardness (GH):</strong> {waterConditions.gh}
+                  </Typography>
+                  <Typography sx={{ mb: 0.5 }}>
+                    <strong>KH:</strong> {waterConditions.kh}
+                  </Typography>
+                  <Typography sx={{ mb: 0.5 }}>
+                    <strong>Nitrate:</strong> {waterConditions.nitrate} ppm
+                  </Typography>
+                </>
+              ) : (
+                <Typography sx={{ opacity: 0.7, fontStyle: "italic" }}>
+                  Water condition data not available
+                </Typography>
+              )}
+            </Box>
           </Box>
         </Box>
 
-        {/* Nearby Aquariums */}
+        {/* Nearby Aquariums - Coming Soon */}
+        {/* 
         <Box sx={{ mt: 6 }}>
           <Box sx={{ display: "flex", justifyContent: "space-between", mb: 2 }}>
             <Box>
@@ -80,7 +190,7 @@ const FishDetailsPage = () => {
                 Aquariums Near You
               </Typography>
               <Typography variant="body2">
-                Aquariums near you where you can buy "{fish.name}"
+                Aquariums near you where you can buy "{fishDetails.name}"
               </Typography>
             </Box>
           </Box>
@@ -98,6 +208,7 @@ const FishDetailsPage = () => {
             ))}
           </Box>
         </Box>
+        */}
       </Box>
 
       <SmartFooter />

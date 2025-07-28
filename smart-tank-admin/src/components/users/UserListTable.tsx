@@ -15,6 +15,7 @@ import type { Customer } from "../../types/Customer";
 
 type Props = {
   users: Customer[];
+  loading: boolean;
 };
 
 const UserListTable = ({ users }: Props) => {
@@ -49,7 +50,7 @@ const UserListTable = ({ users }: Props) => {
                 <Chip
                   label={user.status}
                   color={
-                    user.status.toLowerCase() === "active"
+                    String(user.status).toLowerCase() === "active"
                       ? "success"
                       : "warning"
                   }

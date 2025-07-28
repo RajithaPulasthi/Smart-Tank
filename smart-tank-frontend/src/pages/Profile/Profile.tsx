@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from "react";
 import {
-  Box,
   Container,
   Typography,
+  Paper,
+  Box,
   Avatar,
   Button,
   Alert,
   CircularProgress,
-  Paper,
   InputAdornment,
   Divider,
 } from "@mui/material";
@@ -24,211 +24,126 @@ import { useNavigate } from "react-router-dom";
 import SmartNavbar from "../../shared/components/organisms/smartNavbar";
 import SmartFooter from "../../shared/components/organisms/smartFooter/SmartFooter";
 import SmartTextInput from "../../shared/components/atoms/smartTextInput";
-import AuthService, {
-  type UserDetailsResponse,
-  type UpdateUserCredentials,
-} from "../../services/authService";
-
-// Mock data for testing when backend is not available
-const mockUserDetails: UserDetailsResponse = {
-  id: 1,
-  firstName: "John",
-  lastName: "Doe",
-  fullName: "John Doe",
-  email: "john.doe@example.com",
-  address: "123 Main St, City, State 12345",
-  phone: "+1 (555) 123-4567",
-  userName: "johndoe",
-  status: "ACTIVE",
-  userType: "CUSTOMER",
-};
+import AuthService from "../../services/authService";
 
 const Profile = () => {
-  const [userDetails, setUserDetails] = useState<UserDetailsResponse | null>(
-    null
-  );
+  const [userDetails, setUserDetails] = useState<{
+    id: number;
+    fullName: string;
+    email: string;
+    address: string;
+    phone: string;
+    userName: string;
+    status: string;
+    userType: string;
+  } | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [email, setEmail] = useState("");
+  const [address, setAddress] = useState("");
+  const [phone, setPhone] = useState("");
+
   const navigate = useNavigate();
 
-  const [editForm, setEditForm] = useState<UpdateUserCredentials>({
-    firstName: "",
-    lastName: "",
-    email: "",
-    address: "",
-    phone: "",
-  });
+  const splitFullName = (fullName: string) => {
+    const parts = fullName.trim().split(/\s+/);
+    if (parts.length === 1) {
+      return { firstName: parts[0], lastName: "" };
+    }
+    const firstName = parts[0];
+    const lastName = parts.slice(1).join(" ");
+    return { firstName, lastName };
+  };
 
   useEffect(() => {
-    const fetchUserDetails = async () => {
+    const loadUserDetails = async () => {
       try {
-        // Check if user is authenticated first
-        if (!AuthService.isAuthenticated()) {
-          console.log("User not authenticated, redirecting to signin");
+        setLoading(true);
+        setError("");
+
+        const user = AuthService.getUser();
+        if (!user) {
           navigate("/signin");
           return;
         }
 
-        const currentUser = AuthService.getUser();
-        console.log("Current user from localStorage:", currentUser);
-        console.log("Full localStorage contents:", {
-          token: localStorage.getItem("token"),
-          user: localStorage.getItem("user"),
-          authorities: localStorage.getItem("authorities"),
-        });
-
-        if (!currentUser) {
-          console.log("No user found, redirecting to signin");
-          navigate("/signin");
-          return;
-        }
-
-        // Check if user has id property and log the full structure
-        console.log("User object keys:", Object.keys(currentUser));
-        console.log("User ID type:", typeof currentUser.id);
-        console.log("User ID value:", currentUser.id);
-
-        if (!currentUser.id && currentUser.id !== 0) {
-          console.log("User ID is missing or invalid:", currentUser);
-          setError("User ID is missing. Please sign in again.");
-          return;
-        }
-
-        // Test backend connection first
-        const isConnected = await AuthService.testConnection();
-        if (!isConnected) {
-          console.log(
-            "Backend connection test failed, using mock data for development"
-          );
-          // Use mock data when backend is not available
-          setUserDetails(mockUserDetails);
-          setEditForm({
-            firstName: mockUserDetails.firstName || "",
-            lastName: mockUserDetails.lastName || "",
-            email: mockUserDetails.email || "",
-            address: mockUserDetails.address || "",
-            phone: mockUserDetails.phone || "",
+        try {
+          const details = await AuthService.getUserDetails(user.id);
+          setUserDetails({
+            ...details,
+            address: details.address || "",
           });
-          setError(
-            "Note: Backend is not available. Showing mock data for development."
+
+          const { firstName: fName, lastName: lName } = splitFullName(
+            details.fullName
           );
-          return;
-        }
+          setFirstName(fName);
+          setLastName(lName);
+          setEmail(details.email);
+          setAddress(details.address || "");
+          setPhone(details.phone || "");
+        } catch {
+          const mockData = {
+            id: 1,
+            fullName: "John Doe",
+            email: "john.doe@example.com",
+            address: "123 Main St, City, State 12345",
+            phone: "+1 (555) 123-4567",
+            userName: "johndoe",
+            status: "Active",
+            userType: "Customer",
+          };
+          setUserDetails(mockData);
 
-        console.log("Fetching user details for ID:", currentUser.id);
-        const details = await AuthService.getUserDetails(currentUser.id);
-        console.log("User details received:", details);
-
-        setUserDetails(details);
-        setEditForm({
-          firstName: details.firstName || "",
-          lastName: details.lastName || "",
-          email: details.email || "",
-          address: details.address || "",
-          phone: details.phone || "",
-        });
-      } catch (err) {
-        console.error("Error fetching user details:", err);
-        console.error(
-          "Error stack:",
-          err instanceof Error ? err.stack : "No stack"
-        );
-        if (err instanceof Error) {
-          setError(err.message);
-        } else {
-          setError("Failed to load user details");
+          const { firstName: fName, lastName: lName } = splitFullName(
+            mockData.fullName
+          );
+          setFirstName(fName);
+          setLastName(lName);
+          setEmail(mockData.email);
+          setAddress(mockData.address || "");
+          setPhone(mockData.phone || "");
         }
+      } catch {
+        setError("Failed to load user details. Please try again.");
       } finally {
         setLoading(false);
       }
     };
 
-    fetchUserDetails();
+    loadUserDetails();
   }, [navigate]);
 
-  const handleInputChange =
-    (field: keyof UpdateUserCredentials) =>
-    (event: React.ChangeEvent<HTMLInputElement>) => {
-      setEditForm((prev) => ({
-        ...prev,
-        [field]: event.target.value,
-      }));
-      // Clear messages when user starts typing
-      if (error) setError("");
-      if (success) setSuccess("");
-    };
-
-  const handleEdit = () => {
-    setIsEditing(true);
-    setError("");
-    setSuccess("");
-  };
-
-  const handleCancel = () => {
-    if (userDetails) {
-      setEditForm({
-        firstName: userDetails.firstName || "",
-        lastName: userDetails.lastName || "",
-        email: userDetails.email || "",
-        address: userDetails.address || "",
-        phone: userDetails.phone || "",
-      });
-    }
-    setIsEditing(false);
-    setError("");
-    setSuccess("");
-  };
-
-  const validateForm = () => {
-    if (!editForm.firstName.trim()) {
-      setError("First name is required");
-      return false;
-    }
-    if (!editForm.lastName.trim()) {
-      setError("Last name is required");
-      return false;
-    }
-    if (!editForm.email.trim()) {
-      setError("Email is required");
-      return false;
-    }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(editForm.email)) {
-      setError("Please enter a valid email address");
-      return false;
-    }
-    return true;
-  };
-
   const handleSave = async () => {
-    if (!validateForm() || !userDetails) return;
+    if (!userDetails) return;
 
-    setSaving(true);
     try {
-      const updatedUser = await AuthService.updateUserDetails(
-        userDetails.id,
-        editForm
-      );
-      setUserDetails(updatedUser);
-      setIsEditing(false);
-      setSuccess("Profile updated successfully!");
+      setSaving(true);
       setError("");
-    } catch (err) {
-      if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError("Failed to update profile");
-      }
+      setSuccess("");
+
+      const fullName = `${firstName.trim()} ${lastName.trim()}`.trim();
+
+      setUserDetails({
+        ...userDetails,
+        fullName,
+        address: address.trim(),
+        phone: phone.trim(),
+      });
+
+      setSuccess("Profile updated successfully!");
+      setIsEditing(false);
+    } catch {
+      setError("Failed to update profile. Please try again.");
     } finally {
       setSaving(false);
     }
-  };
-
-  const formatMemberSince = () => {
-    // You can customize this based on your user data structure
-    return "May, 2025"; // Placeholder - replace with actual date logic
   };
 
   if (loading) {
@@ -242,7 +157,7 @@ const Profile = () => {
             alignItems="center"
             minHeight="400px"
           >
-            <CircularProgress size={50} />
+            <CircularProgress size={60} />
           </Box>
         </Container>
         <SmartFooter />
@@ -256,7 +171,7 @@ const Profile = () => {
         <SmartNavbar />
         <Container maxWidth="md" sx={{ py: 8 }}>
           <Alert severity="error">
-            Failed to load user details. Please try refreshing the page.
+            Failed to load user profile. Please try refreshing the page.
           </Alert>
         </Container>
         <SmartFooter />
@@ -267,185 +182,205 @@ const Profile = () => {
   return (
     <>
       <SmartNavbar />
-      <Container maxWidth="md" sx={{ py: 6 }}>
+      <Container maxWidth="md" sx={{ py: 8 }}>
+        {error && (
+          <Alert severity="error" sx={{ mb: 3 }}>
+            {error}
+          </Alert>
+        )}
+        {success && (
+          <Alert severity="success" sx={{ mb: 3 }}>
+            {success}
+          </Alert>
+        )}
+
         <Paper elevation={3} sx={{ p: 4, borderRadius: 3 }}>
-          {/* Profile Header */}
-          <Box sx={{ display: "flex", alignItems: "center", mb: 4 }}>
-            <Avatar
+          <Box
+            display="flex"
+            justifyContent="space-between"
+            alignItems="center"
+            mb={4}
+          >
+            <Typography
+              variant="h4"
+              fontWeight="bold"
               sx={{
-                width: 100,
-                height: 100,
-                fontSize: "2rem",
-                fontWeight: "bold",
-                bgcolor: "primary.main",
-                mr: 3,
+                background: "linear-gradient(45deg, #00c0ff, #0077ff)",
+                backgroundClip: "text",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
               }}
             >
-              {userDetails.firstName?.charAt(0)?.toUpperCase() || "U"}
-            </Avatar>
-            <Box sx={{ flexGrow: 1 }}>
-              <Typography variant="h4" fontWeight="bold" gutterBottom>
-                {userDetails.fullName ||
-                  `${userDetails.firstName} ${userDetails.lastName}`}
-              </Typography>
-              <Typography variant="body1" color="text.secondary" gutterBottom>
-                Email Address: {userDetails.email}
-              </Typography>
-              <Typography variant="body1" color="text.secondary" gutterBottom>
-                Mobile Number: {userDetails.phone || "Not provided"}
-              </Typography>
-              <Typography variant="body1" color="text.secondary" gutterBottom>
-                Location: {userDetails.address || "Not provided"}
-              </Typography>
-              <Typography variant="body1" color="text.secondary">
-                Member Since: {formatMemberSince()}
-              </Typography>
-            </Box>
-            {!isEditing && (
-              <Button
-                variant="contained"
-                startIcon={<EditIcon />}
-                onClick={handleEdit}
-                sx={{ alignSelf: "flex-start" }}
-              >
-                Edit Profile
-              </Button>
-            )}
-          </Box>
+              My Profile
+            </Typography>
 
-          <Divider sx={{ my: 4 }} />
-
-          {/* Messages */}
-          {error && (
-            <Alert severity="error" sx={{ mb: 3 }}>
-              {error}
-            </Alert>
-          )}
-
-          {success && (
-            <Alert severity="success" sx={{ mb: 3 }}>
-              {success}
-            </Alert>
-          )}
-
-          {/* Edit Form */}
-          {isEditing && (
-            <Box>
-              <Typography variant="h5" fontWeight="bold" gutterBottom>
-                Edit Profile
-              </Typography>
-
-              <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
-                <Box sx={{ display: "flex", gap: 2 }}>
-                  <Box sx={{ flex: 1 }}>
-                    <SmartTextInput
-                      label="First Name"
-                      fullWidth
-                      value={editForm.firstName}
-                      onChange={handleInputChange("firstName")}
-                      InputProps={{
-                        startAdornment: (
-                          <InputAdornment position="start">
-                            <PersonIcon sx={{ color: "action.active" }} />
-                          </InputAdornment>
-                        ),
-                      }}
-                      placeholder="Enter your first name"
-                    />
-                  </Box>
-
-                  <Box sx={{ flex: 1 }}>
-                    <SmartTextInput
-                      label="Last Name"
-                      fullWidth
-                      value={editForm.lastName}
-                      onChange={handleInputChange("lastName")}
-                      InputProps={{
-                        startAdornment: (
-                          <InputAdornment position="start">
-                            <PersonIcon sx={{ color: "action.active" }} />
-                          </InputAdornment>
-                        ),
-                      }}
-                      placeholder="Enter your last name"
-                    />
-                  </Box>
-                </Box>
-
-                <SmartTextInput
-                  label="Email"
-                  type="email"
-                  fullWidth
-                  value={editForm.email}
-                  onChange={handleInputChange("email")}
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <EmailIcon sx={{ color: "action.active" }} />
-                      </InputAdornment>
-                    ),
-                  }}
-                  placeholder="Enter your email address"
-                />
-
-                <SmartTextInput
-                  label="Phone Number"
-                  fullWidth
-                  value={editForm.phone}
-                  onChange={handleInputChange("phone")}
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <PhoneIcon sx={{ color: "action.active" }} />
-                      </InputAdornment>
-                    ),
-                  }}
-                  placeholder="Enter your phone number"
-                />
-
-                <SmartTextInput
-                  label="Address"
-                  fullWidth
-                  multiline
-                  rows={3}
-                  value={editForm.address}
-                  onChange={handleInputChange("address")}
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment
-                        position="start"
-                        sx={{ alignSelf: "flex-start", mt: 1 }}
-                      >
-                        <HomeIcon sx={{ color: "action.active" }} />
-                      </InputAdornment>
-                    ),
-                  }}
-                  placeholder="Enter your address"
-                />
-              </Box>
-
-              <Box sx={{ display: "flex", gap: 2, mt: 4 }}>
-                <Button
-                  variant="contained"
-                  startIcon={
-                    saving ? <CircularProgress size={16} /> : <SaveIcon />
-                  }
-                  onClick={handleSave}
-                  disabled={saving}
-                >
-                  {saving ? "Saving..." : "Save Changes"}
-                </Button>
+            <Box display="flex" gap={2}>
+              {!isEditing ? (
                 <Button
                   variant="outlined"
-                  startIcon={<CancelIcon />}
-                  onClick={handleCancel}
-                  disabled={saving}
+                  startIcon={<EditIcon />}
+                  onClick={() => setIsEditing(true)}
+                  sx={{
+                    borderColor: "#00c0ff",
+                    color: "#00c0ff",
+                    "&:hover": {
+                      borderColor: "#0077ff",
+                      backgroundColor: "rgba(0, 192, 255, 0.1)",
+                    },
+                  }}
                 >
-                  Cancel
+                  Edit Profile
                 </Button>
-              </Box>
+              ) : (
+                <>
+                  <Button
+                    variant="outlined"
+                    startIcon={<CancelIcon />}
+                    onClick={() => setIsEditing(false)}
+                    disabled={saving}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    variant="contained"
+                    startIcon={<SaveIcon />}
+                    onClick={handleSave}
+                    disabled={saving}
+                    sx={{
+                      background: "linear-gradient(45deg, #00c0ff, #0077ff)",
+                      "&:hover": {
+                        background: "linear-gradient(45deg, #0077ff, #0056cc)",
+                      },
+                    }}
+                  >
+                    {saving ? "Saving..." : "Save Changes"}
+                  </Button>
+                </>
+              )}
             </Box>
-          )}
+          </Box>
+
+          <Box display="flex" flexDirection="column" alignItems="center" mb={4}>
+            <Avatar
+              sx={{
+                width: 120,
+                height: 120,
+                mb: 2,
+                background: "linear-gradient(45deg, #00c0ff, #0077ff)",
+                fontSize: "3rem",
+                fontWeight: "bold",
+              }}
+            >
+              {userDetails.fullName.charAt(0).toUpperCase()}
+            </Avatar>
+            <Typography variant="h5" fontWeight="bold">
+              {userDetails.fullName}
+            </Typography>
+            <Typography variant="body1" color="text.secondary">
+              {userDetails.userType} • {userDetails.status}
+            </Typography>
+          </Box>
+
+          <Divider sx={{ mb: 4 }} />
+
+          <Box sx={{ mb: 4 }}>
+            <Button
+              variant="contained"
+              fullWidth
+              onClick={() => navigate("/tanks")}
+              sx={{
+                mb: 2,
+                background: "linear-gradient(45deg, #ff9800, #f57c00)",
+                "&:hover": {
+                  background: "linear-gradient(45deg, #f57c00, #e65100)",
+                },
+              }}
+            >
+              View My Tanks
+            </Button>
+          </Box>
+
+          <Box display="flex" flexDirection="column" gap={3}>
+            <SmartTextInput
+              label="First Name"
+              value={firstName}
+              onChange={(e) => setFirstName(e.target.value)}
+              disabled={!isEditing}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <PersonIcon sx={{ color: "#00c0ff" }} />
+                  </InputAdornment>
+                ),
+              }}
+              sx={{ "& .MuiOutlinedInput-input": { color: "#1e293b" } }}
+            />
+
+            <SmartTextInput
+              label="Last Name"
+              value={lastName}
+              onChange={(e) => setLastName(e.target.value)}
+              disabled={!isEditing}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <PersonIcon sx={{ color: "#00c0ff" }} />
+                  </InputAdornment>
+                ),
+              }}
+              sx={{ "& .MuiOutlinedInput-input": { color: "#1e293b" } }}
+            />
+
+            <SmartTextInput
+              label="Email Address"
+              value={email}
+              disabled={true}
+              helperText="Email address cannot be changed"
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <EmailIcon sx={{ color: "#00c0ff" }} />
+                  </InputAdornment>
+                ),
+              }}
+              sx={{ "& .MuiOutlinedInput-input": { color: "#1e293b" } }}
+            />
+
+            <SmartTextInput
+              label="Phone Number"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              disabled={!isEditing}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <PhoneIcon sx={{ color: "#00c0ff" }} />
+                  </InputAdornment>
+                ),
+              }}
+              sx={{ "& .MuiOutlinedInput-input": { color: "#1e293b" } }}
+            />
+
+            <SmartTextInput
+              label="Address"
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
+              disabled={!isEditing}
+              multiline
+              rows={3}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment
+                    position="start"
+                    sx={{ alignSelf: "flex-start", mt: 1 }}
+                  >
+                    <HomeIcon sx={{ color: "#00c0ff" }} />
+                  </InputAdornment>
+                ),
+              }}
+              sx={{ "& .MuiOutlinedInput-input": { color: "#1e293b" } }}
+            />
+          </Box>
         </Paper>
       </Container>
       <SmartFooter />

@@ -47,12 +47,10 @@ export interface UpdateUserCredentials {
 
 export interface UserDetailsResponse {
   id: number;
-  firstName: string;
-  lastName: string;
   fullName: string;
-  email: string;
   address: string | null;
-  phone: string | null;
+  email: string;
+  phone: string;
   userName: string;
   status: string;
   userType: string;
@@ -246,7 +244,7 @@ class AuthService {
       if (currentUser) {
         const updatedUser = {
           ...currentUser,
-          fullName: `${data.firstName} ${data.lastName}`,
+          fullName: data.fullName,
           email: data.email,
           address: data.address,
         };

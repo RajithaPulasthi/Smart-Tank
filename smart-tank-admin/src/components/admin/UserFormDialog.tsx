@@ -10,7 +10,8 @@ import {
 } from "@mui/material";
 import { useState, useEffect } from "react";
 // Import both saveUser and saveAdminUser
-import { saveUser } from "../../services/userService";
+import { saveUser, saveAdminUser } from "../../services/userService";
+import { useNotification } from "../../hooks/useNotification";
 import type { User } from "../../types/User"; // Ensure this path is correct for your updated User type
 
 type Props = {
@@ -18,6 +19,7 @@ type Props = {
   onClose: () => void;
   user: User | null;
   onSave: (user: User) => void;
+  userType: number;
 };
 
 const statusOptions = [
@@ -25,7 +27,8 @@ const statusOptions = [
   { label: "Inactive", value: 0 },
 ];
 
-const UserFormDialog = ({ open, onClose, user, onSave }: Props) => {
+const UserFormDialog = ({ open, onClose, user, onSave, userType }: Props) => {
+  const { showSuccess, showError } = useNotification();
   const [form, setForm] = useState<User>({
     id: 0,
     firstName: "",
@@ -35,7 +38,7 @@ const UserFormDialog = ({ open, onClose, user, onSave }: Props) => {
     password: "",
     address: "",
     status: 1,
-    userType: 1,
+    userType: userType,
   });
 
   useEffect(() => {
@@ -48,7 +51,7 @@ const UserFormDialog = ({ open, onClose, user, onSave }: Props) => {
               ? 1
               : 0
             : user.status,
-        userType: user.userType ?? 1,
+        userType: user.userType ?? userType,
       });
     } else {
       setForm({
@@ -60,10 +63,10 @@ const UserFormDialog = ({ open, onClose, user, onSave }: Props) => {
         password: "",
         address: "",
         status: 1,
-        userType: 1,
+        userType: userType,
       });
     }
-  }, [user]);
+  }, [user, userType]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -77,19 +80,40 @@ const UserFormDialog = ({ open, onClose, user, onSave }: Props) => {
   const handleSubmit = async () => {
     const token = localStorage.getItem("token");
     if (!token) return;
-    const payload: Partial<User> = {
-      ...form,
-      status: form.status,
-      userType: form.userType,
-    };
-    if (user && !form.password) {
-      // Only delete if password is present and optional
-      (payload as Partial<User>).password = undefined;
-    }
-    const success = await saveUser(payload as User, token);
-    if (success) {
-      onSave(payload as User);
-      onClose();
+
+    try {
+      // Use saveAdminUser for creating new Store Admins, otherwise use saveUser
+      const isNewStoreAdmin = !user && userType === 2;
+      const saveFunction = isNewStoreAdmin ? saveAdminUser : saveUser;
+
+      const payload: Partial<User> = {
+        ...form,
+        status: form.status,
+        userType: form.userType,
+      };
+
+      if (user && !form.password) {
+        // Only delete if password is present and optional
+        (payload as Partial<User>).password = undefined;
+      }
+
+      const success = await saveFunction(payload as User, token);
+      if (success) {
+        showSuccess(
+          isNewStoreAdmin
+            ? `Store Admin "${form.firstName} ${form.lastName}" created successfully!`
+            : `User "${form.firstName} ${form.lastName}" saved successfully!`
+        );
+        onSave(payload as User);
+        onClose();
+      }
+    } catch (error) {
+      console.error("Error saving user:", error);
+      if (error instanceof Error) {
+        showError(error.message);
+      } else {
+        showError("An unexpected error occurred while saving the user.");
+      }
     }
   };
 
@@ -156,8 +180,10 @@ const UserFormDialog = ({ open, onClose, user, onSave }: Props) => {
             name="userType"
             value={form.userType}
             onChange={handleChange}
+            disabled={!!user} // Disable editing user type for existing users
           >
             <MenuItem value={1}>Admin</MenuItem>
+            <MenuItem value={2}>Store Admin</MenuItem>
             <MenuItem value={0}>User</MenuItem>
           </TextField>
         </Box>

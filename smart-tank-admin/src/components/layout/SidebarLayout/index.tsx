@@ -21,6 +21,7 @@ import {
   Menu,
   AccountTree,
   Lock,
+  ShoppingCart,
 } from "@mui/icons-material";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useState } from "react";
@@ -45,13 +46,29 @@ const SidebarLayout = ({ collapsed }: SidebarLayoutProps) => {
       icon: <Settings />,
       children: [
         { label: "User", icon: <People />, path: "/admin/user" },
-        { label: "Device", icon: <AccountTree />, path: "/admin/device" },
         { label: "Permission", icon: <Lock />, path: "/admin/permission" },
       ],
     },
-    { label: "Users", icon: <People />, path: "/user" },
+    {
+      label: "Users",
+      icon: <People />,
+      children: [
+        {
+          label: "Customers",
+          icon: <People />,
+          path: "/users/customer",
+        },
+        {
+          label: "Store Admins",
+          icon: <People />,
+          path: "/users/store-admin",
+        },
+      ],
+    },
     { label: "Store", icon: <Store />, path: "/store" },
-    { label: "Aquarium", icon: <Pets />, path: "/aquarium" },
+    { label: "Fish", icon: <Pets />, path: "/fish" },
+    { label: "Orders", icon: <ShoppingCart />, path: "/orders" },
+    { label: "Device", icon: <AccountTree />, path: "/device" },
   ];
 
   return (

@@ -5,8 +5,10 @@ export type Customer = {
   fullName: string;
   email: string;
   userName: string;
+  phoneNumber: string;
   address?: string;
   status: string | number;
   userType: string;
+  role: string;
   authorities?: Authority[]; 
 };

@@ -1,13 +1,14 @@
 import { Box, Typography } from "@mui/material";
+import type { ReactNode } from "react";
 
 interface SmartWhyChooseCardProps {
-  iconSrc: string;
+  icon: ReactNode;
   title: string;
   description: string;
 }
 
 const SmartWhyChooseCard = ({
-  iconSrc,
+  icon,
   title,
   description,
 }: SmartWhyChooseCardProps) => {
@@ -54,16 +55,7 @@ const SmartWhyChooseCard = ({
             minHeight: 80,
           }}
         >
-          <Box
-            component="img"
-            src={iconSrc}
-            alt={title}
-            sx={{
-              width: 48,
-              height: 48,
-              filter: "brightness(0) invert(1)",
-            }}
-          />
+          {icon}
         </Box>
 
         <Box sx={{ flex: 1 }}>

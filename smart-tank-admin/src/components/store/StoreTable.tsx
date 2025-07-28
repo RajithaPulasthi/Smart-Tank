@@ -17,9 +17,12 @@ import {
   Visibility as ViewIcon,
   CheckCircle as ApproveIcon,
   Cancel as RejectIcon,
-  LocationOn as LocationIcon,
-  Phone as PhoneIcon,
-  Email as EmailIcon,
+  PersonAdd as ConnectUserIcon,
+  Add as AddFishIcon,
+  CheckCircleOutline as CompleteIcon,
+  Pets as ViewFishIcon,
+  Edit as EditIcon,
+  PowerSettingsNew as ToggleStatusIcon,
 } from "@mui/icons-material";
 import type { Store } from "../../types/Store";
 
@@ -29,6 +32,12 @@ interface StoreTableProps {
   showActions?: boolean;
   onApprove?: (store: Store) => void;
   onReject?: (store: Store) => void;
+  onConnectUser?: (store: Store) => void;
+  onAddFish?: (store: Store) => void;
+  onComplete?: (store: Store) => void;
+  onViewFish?: (store: Store) => void;
+  onEditInfo?: (store: Store) => void;
+  onToggleStatus?: (store: Store) => void;
   loading?: boolean;
 }
 
@@ -38,6 +47,12 @@ const StoreTable = ({
   showActions = false,
   onApprove,
   onReject,
+  onConnectUser,
+  onAddFish,
+  onComplete,
+  onViewFish,
+  onEditInfo,
+  onToggleStatus,
   loading = false,
 }: StoreTableProps) => {
   const getStatusColor = (status: string) => {
@@ -78,8 +93,6 @@ const StoreTable = ({
           <TableRow>
             <TableCell>Store Name</TableCell>
             <TableCell>Owner</TableCell>
-            <TableCell>Contact</TableCell>
-            <TableCell>Location</TableCell>
             <TableCell>Business Info</TableCell>
             <TableCell align="center">Status</TableCell>
             <TableCell align="center">Actions</TableCell>
@@ -108,31 +121,6 @@ const StoreTable = ({
               </TableCell>
 
               <TableCell>
-                <Box>
-                  <Box display="flex" alignItems="center" gap={0.5} mb={0.5}>
-                    <EmailIcon fontSize="small" color="action" />
-                    <Typography variant="body2">{store.email}</Typography>
-                  </Box>
-                  <Box display="flex" alignItems="center" gap={0.5}>
-                    <PhoneIcon fontSize="small" color="action" />
-                    <Typography variant="body2">{store.phoneNumber}</Typography>
-                  </Box>
-                </Box>
-              </TableCell>
-
-              <TableCell>
-                <Box display="flex" alignItems="center" gap={0.5}>
-                  <LocationIcon fontSize="small" color="action" />
-                  <Box>
-                    <Typography variant="body2">{store.province}</Typography>
-                    <Typography variant="caption" color="textSecondary">
-                      {store.postalCode}
-                    </Typography>
-                  </Box>
-                </Box>
-              </TableCell>
-
-              <TableCell>
                 <Typography variant="body2" fontWeight="bold">
                   Reg: {store.businessRegNumber}
                 </Typography>
@@ -141,7 +129,13 @@ const StoreTable = ({
               <TableCell align="center">
                 <Chip
                   label={store.status}
-                  color={getStatusColor(store.status) as "success" | "warning" | "error" | "default"}
+                  color={
+                    getStatusColor(store.status) as
+                      | "success"
+                      | "warning"
+                      | "error"
+                      | "default"
+                  }
                   size="small"
                 />
               </TableCell>
@@ -175,6 +169,96 @@ const StoreTable = ({
                           onClick={() => onReject?.(store)}
                         >
                           <RejectIcon />
+                        </IconButton>
+                      </Tooltip>
+                    </>
+                  )}
+
+                  {showActions && store.status === "REJECTED" && (
+                    <Tooltip title="Re-approve">
+                      <IconButton
+                        size="small"
+                        color="success"
+                        onClick={() => onApprove?.(store)}
+                      >
+                        <ApproveIcon />
+                      </IconButton>
+                    </Tooltip>
+                  )}
+
+                  {store.status === "APPROVED" && (
+                    <>
+                      <Tooltip title="Connect User">
+                        <IconButton
+                          size="small"
+                          color="primary"
+                          onClick={() => onConnectUser?.(store)}
+                        >
+                          <ConnectUserIcon />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="Add Fish">
+                        <IconButton
+                          size="small"
+                          color="secondary"
+                          onClick={() => onAddFish?.(store)}
+                        >
+                          <AddFishIcon />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="Complete Store">
+                        <IconButton
+                          size="small"
+                          color="success"
+                          onClick={() => onComplete?.(store)}
+                        >
+                          <CompleteIcon />
+                        </IconButton>
+                      </Tooltip>
+                    </>
+                  )}
+
+                  {store.status === "ACTIVE" && (
+                    <>
+                      <Tooltip title="View Fish">
+                        <IconButton
+                          size="small"
+                          color="info"
+                          onClick={() => onViewFish?.(store)}
+                        >
+                          <ViewFishIcon />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="View/Update Info">
+                        <IconButton
+                          size="small"
+                          color="primary"
+                          onClick={() => onEditInfo?.(store)}
+                        >
+                          <EditIcon />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="Deactivate Store">
+                        <IconButton
+                          size="small"
+                          color="warning"
+                          onClick={() => onToggleStatus?.(store)}
+                        >
+                          <ToggleStatusIcon />
+                        </IconButton>
+                      </Tooltip>
+                    </>
+                  )}
+
+                  {store.status === "INACTIVE" && (
+                    <>
+                      <Tooltip title="Activate Store">
+                        <IconButton
+                          size="small"
+                          color="success"
+                          onClick={() => onToggleStatus?.(store)}
+                        >
+                          <ToggleStatusIcon />
                         </IconButton>
                       </Tooltip>
                     </>
