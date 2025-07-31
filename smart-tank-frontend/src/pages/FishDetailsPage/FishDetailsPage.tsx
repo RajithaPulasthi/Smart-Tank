@@ -6,8 +6,16 @@ import {
   CircularProgress,
   Alert,
   Container,
+  Paper,
+  Chip,
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import { 
+  Thermostat, 
+  Science, 
+  Water, 
+  Opacity 
+} from "@mui/icons-material";
 import { useState, useEffect } from "react";
 import FishService, {
   type FishDetails,
@@ -68,13 +76,25 @@ const FishDetailsPage = () => {
         <SmartNavbar />
         <Box
           sx={{
+            minHeight: "100vh",
+            background: "linear-gradient(135deg, #1e293b 0%, #334155 100%)",
             display: "flex",
             justifyContent: "center",
             alignItems: "center",
-            minHeight: "50vh",
           }}
         >
-          <CircularProgress size={60} />
+          <Box sx={{ textAlign: "center" }}>
+            <CircularProgress 
+              size={60} 
+              sx={{ color: "#00c0ff", mb: 2 }} 
+            />
+            <Typography 
+              variant="h6" 
+              sx={{ color: "white", opacity: 0.8 }}
+            >
+              Loading fish details...
+            </Typography>
+          </Box>
         </Box>
         <SmartFooter />
       </>
@@ -85,14 +105,49 @@ const FishDetailsPage = () => {
     return (
       <>
         <SmartNavbar />
-        <Container maxWidth="lg" sx={{ py: 4 }}>
-          <Alert severity="error" sx={{ mb: 3 }}>
-            {error || "Fish not found."}
-          </Alert>
-          <IconButton onClick={() => navigate(-1)} sx={{ mb: 2 }}>
-            <ArrowBackIcon />
-          </IconButton>
-        </Container>
+        <Box
+          sx={{
+            minHeight: "100vh",
+            background: "linear-gradient(135deg, #1e293b 0%, #334155 100%)",
+            py: 8,
+          }}
+        >
+          <Container maxWidth="lg">
+            <Paper
+              elevation={3}
+              sx={{
+                p: 4,
+                borderRadius: 3,
+                background: "rgba(255, 255, 255, 0.05)",
+                backdropFilter: "blur(20px)",
+                border: "1px solid rgba(255, 255, 255, 0.1)",
+              }}
+            >
+              <Alert 
+                severity="error" 
+                sx={{ 
+                  mb: 3,
+                  background: "rgba(255, 0, 0, 0.1)",
+                  color: "white",
+                  border: "1px solid rgba(255, 0, 0, 0.3)",
+                }}
+              >
+                {error || "Fish not found."}
+              </Alert>
+              <IconButton 
+                onClick={() => navigate(-1)} 
+                sx={{ 
+                  color: "#00c0ff",
+                  "&:hover": {
+                    background: "rgba(0, 192, 255, 0.1)",
+                  }
+                }}
+              >
+                <ArrowBackIcon />
+              </IconButton>
+            </Paper>
+          </Container>
+        </Box>
         <SmartFooter />
       </>
     );
@@ -102,113 +157,252 @@ const FishDetailsPage = () => {
     <>
       <SmartNavbar />
 
-      <Box sx={{ px: 4, pt: 4 }}>
-        {/* Back + Name */}
-        <Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>
-          <IconButton onClick={() => navigate(-1)}>
-            <ArrowBackIcon />
-          </IconButton>
-          <Typography variant="h5" fontWeight="bold" sx={{ ml: 1 }}>
-            {fishDetails.name}
-          </Typography>
-        </Box>
-
-        {/* Fish Info */}
-        <Box
-          sx={{
-            backgroundColor: "#004aad",
-            color: "#fff",
-            p: 4,
-            borderRadius: 2,
-            display: "flex",
-            gap: 4,
-            flexWrap: "wrap",
-            justifyContent: "center",
-          }}
-        >
-          <Box
-            component="img"
-            src={fishDetails.image_Url}
-            alt={fishDetails.name}
-            onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
-              e.currentTarget.src =
-                "https://via.placeholder.com/240x240/00c0ff/ffffff?text=Fish+Image";
-            }}
+      <Box 
+        sx={{ 
+          minHeight: "100vh",
+          background: "linear-gradient(135deg, #1e293b 0%, #334155 100%)",
+          py: 8,
+          position: "relative",
+          overflow: "hidden",
+          "&::before": {
+            content: '""',
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background:
+              "radial-gradient(circle at 70% 30%, rgba(0, 119, 255, 0.1) 0%, transparent 50%)",
+            zIndex: 0,
+          },
+        }}
+      >
+        <Container maxWidth="lg" sx={{ position: "relative", zIndex: 1 }}>
+          {/* Back Button & Title */}
+          <Paper
+            elevation={3}
             sx={{
-              width: 240,
-              height: 240,
-              objectFit: "cover",
-              borderRadius: 2,
+              p: 3,
+              mb: 4,
+              borderRadius: 3,
+              background: "rgba(255, 255, 255, 0.05)",
+              backdropFilter: "blur(20px)",
+              border: "1px solid rgba(255, 255, 255, 0.1)",
+              display: "flex",
+              alignItems: "center",
+              gap: 2,
             }}
-          />
-          <Box sx={{ minWidth: 260 }}>
-            <Typography variant="h6" sx={{ mb: 2, fontWeight: "bold" }}>
+          >
+            <IconButton 
+              onClick={() => navigate(-1)}
+              sx={{
+                color: "#00c0ff",
+                background: "rgba(0, 192, 255, 0.1)",
+                "&:hover": {
+                  background: "rgba(0, 192, 255, 0.2)",
+                  transform: "translateY(-2px)",
+                },
+                transition: "all 0.3s ease",
+              }}
+            >
+              <ArrowBackIcon />
+            </IconButton>
+            <Typography 
+              variant="h4" 
+              fontWeight="bold" 
+              sx={{ 
+                color: "white",
+                background: "linear-gradient(45deg, #00c0ff, #0077ff)",
+                backgroundClip: "text",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+              }}
+            >
               {fishDetails.name}
             </Typography>
-            <Typography sx={{ mb: 3 }}>
-              <strong>Scientific name:</strong> {fishDetails.binomial_Name}
-            </Typography>
+          </Paper>
 
-            {/* Water Conditions */}
-            <Box sx={{ mt: 3 }}>
-              <Typography variant="h6" sx={{ mb: 2, fontWeight: "bold" }}>
-                Water Conditions
-              </Typography>
-              {waterConditions ? (
-                <>
-                  <Typography sx={{ mb: 0.5 }}>
-                    <strong>Temperature:</strong> {waterConditions.temp}°C
-                  </Typography>
-                  <Typography sx={{ mb: 0.5 }}>
-                    <strong>pH:</strong> {waterConditions.ph}
-                  </Typography>
-                  <Typography sx={{ mb: 0.5 }}>
-                    <strong>General Hardness (GH):</strong> {waterConditions.gh}
-                  </Typography>
-                  <Typography sx={{ mb: 0.5 }}>
-                    <strong>KH:</strong> {waterConditions.kh}
-                  </Typography>
-                  <Typography sx={{ mb: 0.5 }}>
-                    <strong>Nitrate:</strong> {waterConditions.nitrate} ppm
-                  </Typography>
-                </>
-              ) : (
-                <Typography sx={{ opacity: 0.7, fontStyle: "italic" }}>
-                  Water condition data not available
-                </Typography>
-              )}
-            </Box>
-          </Box>
-        </Box>
-
-        {/* Nearby Aquariums - Coming Soon */}
-        {/* 
-        <Box sx={{ mt: 6 }}>
-          <Box sx={{ display: "flex", justifyContent: "space-between", mb: 2 }}>
-            <Box>
-              <Typography variant="h6" fontWeight="bold">
-                Aquariums Near You
-              </Typography>
-              <Typography variant="body2">
-                Aquariums near you where you can buy "{fishDetails.name}"
-              </Typography>
-            </Box>
-          </Box>
-
-          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2 }}>
-            {aquariums.slice(0, 5).map((store) => (
-              <Box key={store.id}>
-                <SmartStoreCard
-                  id={store.id}
-                  imageSrc={store.bannerImage}
-                  title={store.name}
-                  location={store.address}
+          {/* Fish Information Card */}
+          <Paper
+            elevation={3}
+            sx={{
+              p: 4,
+              borderRadius: 3,
+              background: "rgba(255, 255, 255, 0.05)",
+              backdropFilter: "blur(20px)",
+              border: "1px solid rgba(255, 255, 255, 0.1)",
+              transition: "all 0.3s ease",
+              "&:hover": {
+                transform: "translateY(-4px)",
+                boxShadow: "0 25px 50px rgba(0, 119, 255, 0.2)",
+              },
+            }}
+          >
+            <Box
+              sx={{
+                display: "flex",
+                gap: 4,
+                flexDirection: { xs: "column", md: "row" },
+                alignItems: { xs: "center", md: "flex-start" },
+              }}
+            >
+              {/* Fish Image */}
+              <Box
+                sx={{
+                  position: "relative",
+                  borderRadius: 3,
+                  overflow: "hidden",
+                  boxShadow: "0 8px 32px rgba(0, 192, 255, 0.3)",
+                }}
+              >
+                <Box
+                  component="img"
+                  src={fishDetails.image_Url}
+                  alt={fishDetails.name}
+                  onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
+                    e.currentTarget.src =
+                      "https://via.placeholder.com/300x300/00c0ff/ffffff?text=Fish+Image";
+                  }}
+                  sx={{
+                    width: { xs: 280, md: 300 },
+                    height: { xs: 280, md: 300 },
+                    objectFit: "cover",
+                    borderRadius: 3,
+                  }}
                 />
               </Box>
-            ))}
-          </Box>
-        </Box>
-        */}
+
+              {/* Fish Details */}
+              <Box sx={{ flex: 1, minWidth: 0 }}>
+                <Typography 
+                  variant="h4" 
+                  sx={{ 
+                    mb: 2, 
+                    fontWeight: "bold",
+                    color: "white",
+                  }}
+                >
+                  {fishDetails.name}
+                </Typography>
+                
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1,
+                    mb: 4,
+                    p: 2,
+                    background: "rgba(0, 192, 255, 0.1)",
+                    borderRadius: 2,
+                    border: "1px solid rgba(0, 192, 255, 0.3)",
+                  }}
+                >
+                  <Science sx={{ color: "#00c0ff", fontSize: 20 }} />
+                  <Typography sx={{ color: "white", fontStyle: "italic" }}>
+                    <strong>Scientific name:</strong> {fishDetails.binomial_Name}
+                  </Typography>
+                </Box>
+
+                {/* Water Conditions Section */}
+                <Box>
+                  <Typography 
+                    variant="h5" 
+                    sx={{ 
+                      mb: 3, 
+                      fontWeight: "bold",
+                      color: "white",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 1,
+                    }}
+                  >
+                    <Water sx={{ color: "#00c0ff" }} />
+                    Water Conditions
+                  </Typography>
+                  
+                  {waterConditions ? (
+                    <Box
+                      sx={{
+                        display: "grid",
+                        gridTemplateColumns: { xs: "1fr", sm: "repeat(2, 1fr)" },
+                        gap: 2,
+                      }}
+                    >
+                      <Chip
+                        icon={<Thermostat sx={{ color: "#00c0ff" }} />}
+                        label={`Temperature: ${waterConditions.temp}°C`}
+                        sx={{
+                          background: "rgba(0, 192, 255, 0.1)",
+                          color: "white",
+                          border: "1px solid rgba(0, 192, 255, 0.3)",
+                          "& .MuiChip-icon": { color: "#00c0ff" },
+                        }}
+                      />
+                      <Chip
+                        icon={<Science sx={{ color: "#00c0ff" }} />}
+                        label={`pH: ${waterConditions.ph}`}
+                        sx={{
+                          background: "rgba(0, 192, 255, 0.1)",
+                          color: "white",
+                          border: "1px solid rgba(0, 192, 255, 0.3)",
+                          "& .MuiChip-icon": { color: "#00c0ff" },
+                        }}
+                      />
+                      <Chip
+                        icon={<Opacity sx={{ color: "#00c0ff" }} />}
+                        label={`GH: ${waterConditions.gh}`}
+                        sx={{
+                          background: "rgba(0, 192, 255, 0.1)",
+                          color: "white",
+                          border: "1px solid rgba(0, 192, 255, 0.3)",
+                          "& .MuiChip-icon": { color: "#00c0ff" },
+                        }}
+                      />
+                      <Chip
+                        icon={<Water sx={{ color: "#00c0ff" }} />}
+                        label={`KH: ${waterConditions.kh}`}
+                        sx={{
+                          background: "rgba(0, 192, 255, 0.1)",
+                          color: "white",
+                          border: "1px solid rgba(0, 192, 255, 0.3)",
+                          "& .MuiChip-icon": { color: "#00c0ff" },
+                        }}
+                      />
+                      <Chip
+                        label={`Nitrate: ${waterConditions.nitrate} ppm`}
+                        sx={{
+                          gridColumn: { xs: "1", sm: "1 / -1" },
+                          background: "rgba(0, 192, 255, 0.1)",
+                          color: "white",
+                          border: "1px solid rgba(0, 192, 255, 0.3)",
+                        }}
+                      />
+                    </Box>
+                  ) : (
+                    <Box
+                      sx={{
+                        p: 3,
+                        textAlign: "center",
+                        background: "rgba(255, 255, 255, 0.05)",
+                        borderRadius: 2,
+                        border: "1px solid rgba(255, 255, 255, 0.1)",
+                      }}
+                    >
+                      <Typography 
+                        sx={{ 
+                          color: "rgba(255, 255, 255, 0.7)", 
+                          fontStyle: "italic" 
+                        }}
+                      >
+                        Water condition data not available
+                      </Typography>
+                    </Box>
+                  )}
+                </Box>
+              </Box>
+            </Box>
+          </Paper>
+        </Container>
       </Box>
 
       <SmartFooter />
