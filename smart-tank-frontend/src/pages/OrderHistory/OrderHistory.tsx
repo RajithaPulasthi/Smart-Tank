@@ -54,35 +54,51 @@ const OrderHistory = () => {
         setLoading(true);
         setError("");
 
-        const token = AuthService.getToken();
-        if (!token) {
-          throw new Error("Authentication required. Please log in again.");
-        }
+        // Simulate API delay
+        await new Promise((resolve) => setTimeout(resolve, 1000));
 
-        const response = await fetch(
-          "http://localhost:8080/api/Payments/user",
+        // Demo order history data
+        const demoOrders: Payment[] = [
           {
-            method: "GET",
-            headers: {
-              accept: "*/*",
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
+            id: 1,
+            service: "Smart Water Monitor Pro",
+            amount: 15000,
+            paymentMethod: "Credit Card",
+            billingName: "John Smith",
+            billingEmail: "john.smith@email.com",
+            billingPhone: "+94 77 123 4567",
+            billingAddress: "123 Ocean Drive, Colombo 03",
+            paymentDate: "2025-07-01T10:00:00Z",
+            status: "COMPLETED",
+          },
+          {
+            id: 2,
+            service: "AquaSense Basic",
+            amount: 8500,
+            paymentMethod: "Credit Card",
+            billingName: "John Smith",
+            billingEmail: "john.smith@email.com",
+            billingPhone: "+94 77 123 4567",
+            billingAddress: "123 Ocean Drive, Colombo 03",
+            paymentDate: "2025-07-15T14:30:00Z",
+            status: "COMPLETED",
+          },
+          {
+            id: 3,
+            service: "Compact Tank Monitor",
+            amount: 6500,
+            paymentMethod: "Credit Card",
+            billingName: "John Smith",
+            billingEmail: "john.smith@email.com",
+            billingPhone: "+94 77 123 4567",
+            billingAddress: "123 Ocean Drive, Colombo 03",
+            paymentDate: "2025-07-25T09:15:00Z",
+            status: "SHIPPED",
+          },
+        ];
 
-        if (!response.ok) {
-          if (response.status === 401) {
-            AuthService.logout();
-            navigate("/signin");
-            throw new Error("Session expired. Please log in again.");
-          }
-          throw new Error(
-            `Failed to fetch order history: ${response.statusText}`
-          );
-        }
-
-        const data = await response.json();
-        setPayments(Array.isArray(data) ? data : []);
+        console.log("Demo: Order history loaded", demoOrders);
+        setPayments(demoOrders);
       } catch (err) {
         setError(
           err instanceof Error ? err.message : "Failed to load order history."

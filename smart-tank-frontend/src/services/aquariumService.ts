@@ -1,6 +1,5 @@
-import axios from "axios";
-
-const API_URL = "http://localhost:8082/api/Aquariums";
+// Aquarium service for the frontend (DEMO VERSION - Using dummy data)
+import { dummyAquariums, dummyShopInfos, type AquariumListItem, type AquariumShopInfo } from '../Data/dummyAquariums';
 
 export interface AquariumRegistrationData {
   AquariumName: string;
@@ -17,65 +16,51 @@ export interface AquariumRegistrationData {
   FishListFile: File;
 }
 
-export interface AquariumListItem {
-  id: number;
-  aquariumName: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  phoneNumber: string;
-  businessName: string;
-  businessRegNumber: string;
-  address: string;
-  province: string;
-  postalCode: string;
-  status: "ACTIVE" | "INACTIVE" | "PENDING";
-}
-
-export interface AquariumShopInfo {
-  id: number;
-  aquariumName: string;
-  about: string;
-  shopEmail: string;
-  contactNumber: string;
-  shopAddress: string;
-  openingHours: string;
-  facebookUrl: string;
-  instagramUrl: string;
-  youTubeUrl: string;
-  twitterUrl: string;
-  aquariumId: number;
-}
+export { type AquariumListItem, type AquariumShopInfo };
 
 const registerAquarium = async (data: AquariumRegistrationData) => {
-  const formData = new FormData();
-  Object.keys(data).forEach(key => {
-    formData.append(key, data[key as keyof AquariumRegistrationData]);
-  });
-
-  const response = await axios.post(`${API_URL}/register-aquarium`, formData, {
-    headers: {
-      "Content-Type": "multipart/form-data",
-    },
-  });
-
-  return response.data;
+  // Simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 1500));
+  
+  try {
+    // In demo mode, always succeed
+    console.log("Demo: Aquarium registration successful", data);
+    
+    return {
+      success: true,
+      message: "Aquarium registered successfully! (Demo mode - data not persisted)",
+      id: Date.now() // Return a mock ID
+    };
+  } catch (error) {
+    console.error("Registration failed:", error);
+    throw new Error("Registration failed. Please try again.");
+  }
 };
 
 const getAllAquariums = async (): Promise<AquariumListItem[]> => {
+  // Simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 600));
+  
   try {
-    const response = await axios.get(`${API_URL}`);
-    return response.data;
+    return [...dummyAquariums]; // Return copy of dummy data
   } catch (error) {
     console.error("Error fetching aquariums:", error);
-    throw error;
+    throw new Error("Failed to load aquariums");
   }
 };
 
 const getAquariumShopInfo = async (id: number): Promise<AquariumShopInfo> => {
+  // Simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 400));
+  
   try {
-    const response = await axios.get(`${API_URL}/aquarium-shop-info/${id}`);
-    return response.data;
+    const shopInfo = dummyShopInfos.find(shop => shop.id === id);
+    
+    if (!shopInfo) {
+      throw new Error("Aquarium shop not found");
+    }
+    
+    return shopInfo;
   } catch (error) {
     console.error("Error fetching aquarium shop info:", error);
     throw error;

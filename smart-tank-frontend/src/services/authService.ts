@@ -1,337 +1,112 @@
-// Authentication service for the frontend
-export interface User {
-  id: number;
+import { dummyCredentials, getDummyAuthResponse, type AuthResponse, type User } from '../Data/dummyAuth';
+
+// Simulate API delay
+const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+export const loginUser = async (credentials: { userName: string; password: string }): Promise<AuthResponse> => {
+  await delay(1000); // Simulate network delay
+  
+  // Check if credentials match any dummy user
+  const validCredential = dummyCredentials.find(
+    cred => cred.userName === credentials.userName && cred.password === credentials.password
+  );
+  
+  if (!validCredential) {
+    throw new Error('Invalid username or password');
+  }
+  
+  const authResponse = getDummyAuthResponse(credentials.userName);
+  
+  // Store token and user data in localStorage for persistence
+  localStorage.setItem('token', authResponse.token);
+  localStorage.setItem('user', JSON.stringify(authResponse.user));
+  
+  return authResponse;
+};
+
+export const registerUser = async (userData: {
   fullName: string;
-  address: string | null;
   email: string;
   userName: string;
-  status: string;
-  userType: string;
-}
-
-export interface Authority {
-  authority: string;
-}
-
-export interface AuthResponse {
-  token: string;
-  user: User;
-  authorities: Authority[];
-}
-
-export interface LoginCredentials {
-  userName: string;
   password: string;
-}
-
-export interface SignUpCredentials {
-  firstName: string;
-  lastName: string;
-  email: string;
-  password: string;
-}
-
-export interface SignUpResponse {
-  success: boolean;
-  message?: string;
-  user?: User;
-}
-
-export interface UpdateUserCredentials {
-  firstName: string;
-  lastName: string;
-  email: string;
   address: string;
-  phone: string;
-}
-
-export interface UserDetailsResponse {
-  id: number;
-  fullName: string;
-  address: string | null;
-  email: string;
-  phone: string;
-  userName: string;
-  status: string;
-  userType: string;
-}
-
-class AuthService {
-  private static readonly API_BASE = "http://localhost:8080/api";
-  private static readonly STORAGE_KEYS = {
-    TOKEN: "token",
-    USER: "user",
-    AUTHORITIES: "authorities",
+}): Promise<AuthResponse> => {
+  await delay(1500); // Simulate network delay
+  
+  // In a real app, you'd validate the data and save to backend
+  // For demo, just return a success response
+  const newUser: User = {
+    id: Date.now(), // Simple ID generation
+    fullName: userData.fullName,
+    address: userData.address,
+    email: userData.email,
+    userName: userData.userName,
+    status: 'ACTIVE',
+    userType: 'CUSTOMER'
   };
+  
+  return {
+    token: `demo_token_${Date.now()}`,
+    user: newUser,
+    authorities: [{ authority: 'ROLE_USER' }]
+  };
+};
 
-  static async login(credentials: LoginCredentials): Promise<AuthResponse> {
-    try {
-      const response = await fetch(`${this.API_BASE}/Authentication`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(credentials),
-      });
-
-      if (!response.ok) {
-        // Try to parse error response as JSON first
-        let errorMessage = "Invalid credentials";
-        try {
-          const errorData = await response.json();
-          errorMessage = errorData.message || errorData.error || errorMessage;
-        } catch {
-          // If JSON parsing fails, get text response
-          const errorText = await response.text();
-          if (errorText.trim()) {
-            errorMessage = errorText;
-          }
-        }
-        throw new Error(errorMessage);
-      }
-
-      // Try to parse successful response as JSON
-      let data: AuthResponse;
-      try {
-        data = await response.json();
-      } catch {
-        // If JSON parsing fails, get the text to see what we received
-        const responseText = await response.text();
-        console.error("Failed to parse JSON response:", responseText);
-        throw new Error("Invalid response format from server");
-      }
-
-      // Check if user has the required authority for customer portal
-      const hasCustomerRole = data.authorities?.some(
-        (auth) => auth.authority === "ROLE_AQUARIUM_CUSTOMER"
-      );
-
-      if (!hasCustomerRole) {
-        throw new Error("Access denied. This portal is for aquarium customers only.");
-      }
-
-      // Store authentication data
-      this.storeAuthData(data);
-
-      return data;
-    } catch (error) {
-      // Handle network errors or other fetch errors
-      if (error instanceof TypeError) {
-        throw new Error("Network error. Please check your connection and try again.");
-      }
-      throw error;
-    }
+export const getUserProfile = async (): Promise<User> => {
+  await delay(500);
+  
+  // Get user from localStorage or return demo user
+  const storedUser = localStorage.getItem('user');
+  if (storedUser) {
+    return JSON.parse(storedUser);
   }
+  
+  // Extract user info from token (in demo, just use first user)
+  const authResponse = getDummyAuthResponse('johnsmith');
+  return authResponse.user;
+};
 
-  static async signUp(credentials: SignUpCredentials): Promise<SignUpResponse> {
-    try {
-      const response = await fetch(`${this.API_BASE}/Users/customer`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(credentials),
-      });
+export const updateUserProfile = async (_token: string, userData: Partial<User>): Promise<User> => {
+  await delay(800);
+  
+  // In demo, just return updated user data
+  const currentUser = await getUserProfile();
+  const updatedUser = { ...currentUser, ...userData };
+  
+  // Update stored user in localStorage
+  localStorage.setItem('user', JSON.stringify(updatedUser));
+  
+  return updatedUser;
+};
 
-      if (!response.ok) {
-        // Try to parse error response as JSON first
-        let errorMessage = "Registration failed";
-        try {
-          const errorData = await response.json();
-          errorMessage = errorData.message || errorData.error || errorMessage;
-        } catch {
-          // If JSON parsing fails, get text response
-          const errorText = await response.text();
-          if (errorText.trim()) {
-            errorMessage = errorText;
-          }
-        }
-        throw new Error(errorMessage);
-      }
+export const logoutUser = async (): Promise<void> => {
+  await delay(300);
+  // Clear local storage
+  localStorage.removeItem('token');
+  localStorage.removeItem('user');
+};
 
-      // Try to parse successful response as JSON
-      let data;
-      try {
-        data = await response.json();
-      } catch {
-        // If JSON parsing fails for success response, assume it's successful
-        data = { success: true };
-      }
-
-      return {
-        success: true,
-        message: "Account created successfully",
-        user: data
-      };
-    } catch (error) {
-      // Handle network errors or other fetch errors
-      if (error instanceof TypeError) {
-        throw new Error("Network error. Please check your connection and try again.");
-      }
-      throw error;
-    }
-  }
-
-  static async getUserDetails(userId: number): Promise<UserDetailsResponse> {
-    try {
-      console.log("Making GET request to:", `${this.API_BASE}/Users/${userId}`);
-      console.log("Headers:", this.getAuthHeaders());
-      
-      const response = await fetch(`${this.API_BASE}/Users/${userId}`, {
-        method: "GET",
-        headers: this.getAuthHeaders(),
-      });
-
-      console.log("Response status:", response.status);
-      console.log("Response headers:", response.headers);
-
-      if (!response.ok) {
-        console.error("Response not ok, status:", response.status);
-        let errorMessage = "Failed to fetch user details";
-        try {
-          const errorData = await response.json();
-          console.error("Error data:", errorData);
-          errorMessage = errorData.message || errorData.error || errorMessage;
-        } catch (jsonError) {
-          console.error("Failed to parse error JSON:", jsonError);
-          const errorText = await response.text();
-          console.error("Error text:", errorText);
-          if (errorText.trim()) {
-            errorMessage = errorText;
-          }
-        }
-        throw new Error(errorMessage);
-      }
-
-      const data: UserDetailsResponse = await response.json();
-      console.log("Successfully fetched user details:", data);
-      return data;
-    } catch (error) {
-      console.error("Error in getUserDetails:", error);
-      if (error instanceof TypeError) {
-        throw new Error("Network error. Please check your connection and try again.");
-      }
-      throw error;
-    }
-  }
-
-  static async updateUserDetails(userId: number, credentials: UpdateUserCredentials): Promise<UserDetailsResponse> {
-    try {
-      const response = await fetch(`${this.API_BASE}/Users/${userId}`, {
-        method: "PUT",
-        headers: this.getAuthHeaders(),
-        body: JSON.stringify(credentials),
-      });
-
-      if (!response.ok) {
-        let errorMessage = "Failed to update user details";
-        try {
-          const errorData = await response.json();
-          errorMessage = errorData.message || errorData.error || errorMessage;
-        } catch {
-          const errorText = await response.text();
-          if (errorText.trim()) {
-            errorMessage = errorText;
-          }
-        }
-        throw new Error(errorMessage);
-      }
-
-      const data: UserDetailsResponse = await response.json();
-      
-      // Update stored user data
-      const currentUser = this.getUser();
-      if (currentUser) {
-        const updatedUser = {
-          ...currentUser,
-          fullName: data.fullName,
-          email: data.email,
-          address: data.address,
-        };
-        localStorage.setItem(this.STORAGE_KEYS.USER, JSON.stringify(updatedUser));
-      }
-
-      return data;
-    } catch (error) {
-      if (error instanceof TypeError) {
-        throw new Error("Network error. Please check your connection and try again.");
-      }
-      throw error;
-    }
-  }
-
-  static async testConnection(): Promise<boolean> {
-    try {
-      console.log("Testing backend connection...");
-      const response = await fetch(`${this.API_BASE}/test`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-      
-      console.log("Test connection response status:", response.status);
-      return response.ok;
-    } catch (error) {
-      console.error("Backend connection test failed:", error);
-      return false;
-    }
-  }
-
-  static storeAuthData(authData: AuthResponse): void {
-    localStorage.setItem(this.STORAGE_KEYS.TOKEN, authData.token);
-    localStorage.setItem(this.STORAGE_KEYS.USER, JSON.stringify(authData.user));
-    localStorage.setItem(this.STORAGE_KEYS.AUTHORITIES, JSON.stringify(authData.authorities));
-  }
-
-  static getToken(): string | null {
-    return localStorage.getItem(this.STORAGE_KEYS.TOKEN);
-  }
-
-  static getUser(): User | null {
-    const userStr = localStorage.getItem(this.STORAGE_KEYS.USER);
+// AuthService object for default export compatibility
+const AuthService = {
+  login: loginUser,
+  register: registerUser,
+  signUp: registerUser, // Alias for register
+  getUserProfile,
+  getUserDetails: getUserProfile, // Alias for getUserProfile  
+  updateUserProfile,
+  logout: logoutUser,
+  
+  // Helper methods for compatibility
+  getToken: () => localStorage.getItem('token'),
+  isAuthenticated: () => !!localStorage.getItem('token'),
+  getCurrentUser: () => {
+    const userStr = localStorage.getItem('user');
+    return userStr ? JSON.parse(userStr) : null;
+  },
+  getUser: () => {
+    const userStr = localStorage.getItem('user');
     return userStr ? JSON.parse(userStr) : null;
   }
-
-  static getAuthorities(): Authority[] {
-    const authStr = localStorage.getItem(this.STORAGE_KEYS.AUTHORITIES);
-    return authStr ? JSON.parse(authStr) : [];
-  }
-
-  static isAuthenticated(): boolean {
-    const token = this.getToken();
-    const user = this.getUser();
-    const authorities = this.getAuthorities();
-
-    return !!(
-      token &&
-      user &&
-      authorities.some((auth) => auth.authority === "ROLE_AQUARIUM_CUSTOMER")
-    );
-  }
-
-  static hasAuthority(authority: string): boolean {
-    const authorities = this.getAuthorities();
-    return authorities.some((auth) => auth.authority === authority);
-  }
-
-  static logout(): void {
-    localStorage.removeItem(this.STORAGE_KEYS.TOKEN);
-    localStorage.removeItem(this.STORAGE_KEYS.USER);
-    localStorage.removeItem(this.STORAGE_KEYS.AUTHORITIES);
-  }
-
-  static getAuthHeaders(): Record<string, string> {
-    const token = this.getToken();
-    return token
-      ? {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        }
-      : {
-          "Content-Type": "application/json",
-        };
-  }
-}
+};
 
 export default AuthService;

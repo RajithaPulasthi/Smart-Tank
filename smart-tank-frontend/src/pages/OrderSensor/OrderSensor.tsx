@@ -160,43 +160,29 @@ const OrderSensor = () => {
         throw new Error("Please fill in all required fields");
       }
 
-      // Get authentication token
-      const token = AuthService.getToken();
-      if (!token) {
-        throw new Error("Authentication required. Please log in again.");
-      }
+      // Simulate API delay
+      await new Promise((resolve) => setTimeout(resolve, 2000));
 
-      // Call the payment API
-      const response = await fetch("http://localhost:8080/api/Payments/add", {
-        method: "POST",
-        headers: {
-          accept: "*/*",
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          billingName: formData.cardHolderName,
-          billingAddress: formData.billingAddress,
-          billingEmail: formData.email,
-          billingPhone: formData.billingPhone,
-          service: "Smart Tank Sensor",
-          paymentMethod: "Credit Card",
-          amount: total,
-        }),
+      // In demo mode, always succeed
+      console.log("Demo: Payment processed successfully", {
+        billingName: formData.cardHolderName,
+        billingAddress: formData.billingAddress,
+        billingEmail: formData.email,
+        billingPhone: formData.billingPhone,
+        service: "Smart Tank Sensor",
+        paymentMethod: "Credit Card",
+        amount: total,
       });
 
-      if (!response.ok) {
-        if (response.status === 401) {
-          // Token expired or invalid, redirect to login
-          AuthService.logout();
-          navigate("/signin");
-          throw new Error("Session expired. Please log in again.");
-        }
-        throw new Error(`Payment failed: ${response.statusText}`);
-      }
+      // Simulate successful payment response
+      const demoResponse = {
+        success: true,
+        transactionId: `DEMO_${Date.now()}`,
+        amount: total,
+        message: "Payment processed successfully (Demo mode)",
+      };
 
-      const result = await response.json();
-      console.log("Payment successful:", result);
+      console.log("Payment successful:", demoResponse);
 
       setOrderSuccess(true);
 

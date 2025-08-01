@@ -101,49 +101,32 @@ const RegisterAquarium = () => {
     }
 
     try {
-      // Get authentication token if available
-      const token =
-        localStorage.getItem("authToken") ||
-        sessionStorage.getItem("authToken");
+      // Simulate API delay
+      await new Promise((resolve) => setTimeout(resolve, 1500));
 
-      const headers: HeadersInit = {};
-      if (token) {
-        headers["Authorization"] = `Bearer ${token}`;
-      }
+      // In demo mode, always succeed
+      console.log("Demo: Aquarium registration successful", formDataToSubmit);
 
-      // Make the API call
-      const response = await fetch(
-        "http://localhost:8082/api/Aquariums/register-aquarium",
-        {
-          method: "POST",
-          headers: headers,
-          body: formDataToSubmit,
-        }
+      alert(
+        "Registration submitted successfully! (Demo mode - data not persisted)"
       );
 
-      if (response.ok) {
-        alert("Registration submitted successfully!");
-        // Reset form and refresh page
-        setFormData({
-          aquariumName: "",
-          firstName: "",
-          lastName: "",
-          email: "",
-          phoneNumber: "",
-          businessName: "",
-          businessRegNumber: "",
-          address: "",
-          province: "",
-          postalCode: "",
-          agreeToTerms: false,
-        });
-        setUploadedFile(null);
-        window.location.reload();
-      } else {
-        throw new Error(
-          `Registration failed: ${response.status} ${response.statusText}`
-        );
-      }
+      // Reset form and refresh page
+      setFormData({
+        aquariumName: "",
+        firstName: "",
+        lastName: "",
+        email: "",
+        phoneNumber: "",
+        businessName: "",
+        businessRegNumber: "",
+        address: "",
+        province: "",
+        postalCode: "",
+        agreeToTerms: false,
+      });
+      setUploadedFile(null);
+      window.location.reload();
     } catch (error) {
       console.error("Submission error:", error);
       const errorMessage =

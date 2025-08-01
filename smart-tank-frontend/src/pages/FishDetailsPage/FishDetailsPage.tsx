@@ -10,12 +10,7 @@ import {
   Chip,
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
-import { 
-  Thermostat, 
-  Science, 
-  Water, 
-  Opacity 
-} from "@mui/icons-material";
+import { Thermostat, Science, Water, Opacity } from "@mui/icons-material";
 import { useState, useEffect } from "react";
 import FishService, {
   type FishDetails,
@@ -84,14 +79,8 @@ const FishDetailsPage = () => {
           }}
         >
           <Box sx={{ textAlign: "center" }}>
-            <CircularProgress 
-              size={60} 
-              sx={{ color: "#00c0ff", mb: 2 }} 
-            />
-            <Typography 
-              variant="h6" 
-              sx={{ color: "white", opacity: 0.8 }}
-            >
+            <CircularProgress size={60} sx={{ color: "#00c0ff", mb: 2 }} />
+            <Typography variant="h6" sx={{ color: "white", opacity: 0.8 }}>
               Loading fish details...
             </Typography>
           </Box>
@@ -123,9 +112,9 @@ const FishDetailsPage = () => {
                 border: "1px solid rgba(255, 255, 255, 0.1)",
               }}
             >
-              <Alert 
-                severity="error" 
-                sx={{ 
+              <Alert
+                severity="error"
+                sx={{
                   mb: 3,
                   background: "rgba(255, 0, 0, 0.1)",
                   color: "white",
@@ -134,13 +123,13 @@ const FishDetailsPage = () => {
               >
                 {error || "Fish not found."}
               </Alert>
-              <IconButton 
-                onClick={() => navigate(-1)} 
-                sx={{ 
+              <IconButton
+                onClick={() => navigate(-1)}
+                sx={{
                   color: "#00c0ff",
                   "&:hover": {
                     background: "rgba(0, 192, 255, 0.1)",
-                  }
+                  },
                 }}
               >
                 <ArrowBackIcon />
@@ -157,8 +146,8 @@ const FishDetailsPage = () => {
     <>
       <SmartNavbar />
 
-      <Box 
-        sx={{ 
+      <Box
+        sx={{
           minHeight: "100vh",
           background: "linear-gradient(135deg, #1e293b 0%, #334155 100%)",
           py: 8,
@@ -193,7 +182,7 @@ const FishDetailsPage = () => {
               gap: 2,
             }}
           >
-            <IconButton 
+            <IconButton
               onClick={() => navigate(-1)}
               sx={{
                 color: "#00c0ff",
@@ -207,10 +196,10 @@ const FishDetailsPage = () => {
             >
               <ArrowBackIcon />
             </IconButton>
-            <Typography 
-              variant="h4" 
-              fontWeight="bold" 
-              sx={{ 
+            <Typography
+              variant="h4"
+              fontWeight="bold"
+              sx={{
                 color: "white",
                 background: "linear-gradient(45deg, #00c0ff, #0077ff)",
                 backgroundClip: "text",
@@ -274,17 +263,17 @@ const FishDetailsPage = () => {
 
               {/* Fish Details */}
               <Box sx={{ flex: 1, minWidth: 0 }}>
-                <Typography 
-                  variant="h4" 
-                  sx={{ 
-                    mb: 2, 
+                <Typography
+                  variant="h4"
+                  sx={{
+                    mb: 2,
                     fontWeight: "bold",
                     color: "white",
                   }}
                 >
                   {fishDetails.name}
                 </Typography>
-                
+
                 <Box
                   sx={{
                     display: "flex",
@@ -299,16 +288,17 @@ const FishDetailsPage = () => {
                 >
                   <Science sx={{ color: "#00c0ff", fontSize: 20 }} />
                   <Typography sx={{ color: "white", fontStyle: "italic" }}>
-                    <strong>Scientific name:</strong> {fishDetails.binomial_Name}
+                    <strong>Scientific name:</strong>{" "}
+                    {fishDetails.binomial_Name}
                   </Typography>
                 </Box>
 
                 {/* Water Conditions Section */}
                 <Box>
-                  <Typography 
-                    variant="h5" 
-                    sx={{ 
-                      mb: 3, 
+                  <Typography
+                    variant="h5"
+                    sx={{
+                      mb: 3,
                       fontWeight: "bold",
                       color: "white",
                       display: "flex",
@@ -319,12 +309,15 @@ const FishDetailsPage = () => {
                     <Water sx={{ color: "#00c0ff" }} />
                     Water Conditions
                   </Typography>
-                  
+
                   {waterConditions ? (
                     <Box
                       sx={{
                         display: "grid",
-                        gridTemplateColumns: { xs: "1fr", sm: "repeat(2, 1fr)" },
+                        gridTemplateColumns: {
+                          xs: "1fr",
+                          sm: "repeat(2, 1fr)",
+                        },
                         gap: 2,
                       }}
                     >
@@ -388,10 +381,10 @@ const FishDetailsPage = () => {
                         border: "1px solid rgba(255, 255, 255, 0.1)",
                       }}
                     >
-                      <Typography 
-                        sx={{ 
-                          color: "rgba(255, 255, 255, 0.7)", 
-                          fontStyle: "italic" 
+                      <Typography
+                        sx={{
+                          color: "rgba(255, 255, 255, 0.7)",
+                          fontStyle: "italic",
                         }}
                       >
                         Water condition data not available
