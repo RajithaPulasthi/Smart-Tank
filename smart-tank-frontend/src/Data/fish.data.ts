@@ -1,5 +1,3 @@
-import AngelFish from "../assets/fish/angel-fish.jpg";
-
 export interface FishProfile {
     id: string;
     name: string;
@@ -18,7 +16,7 @@ export interface FishProfile {
     {
       id: "angel-fish",
       name: "Angel Fish",
-      image: AngelFish,
+      image: "https://intanaquariumfeeds.com/cdn/shop/articles/3d-colorful-fish-with-dark-background_23-2150721042.jpg?v=1715687210",
       scientificName: "Pterophyllum scalare",
       ph: 7,
       hardness: 8,
@@ -31,7 +29,7 @@ export interface FishProfile {
     {
       id: "neon-tetra",
       name: "Neon Tetra",
-      image: "../assets/fish/neon-tetra.jpg",
+      image: "https://coburgaquarium.com.au/cdn/shop/products/NeonTetra_1200x1000px.jpg?v=1668659269",
       scientificName: "Paracheirodon innesi",
       ph: 6.5,
       hardness: 4,
@@ -44,7 +42,7 @@ export interface FishProfile {
     {
       id: "guppy",
       name: "Guppy",
-      image: "../assets/fish/guppy.jpg",
+      image: "https://cdn.britannica.com/02/117202-004-526214C9.jpg",
       scientificName: "Poecilia reticulata",
       ph: 7.2,
       hardness: 9,
@@ -57,7 +55,7 @@ export interface FishProfile {
     {
       id: "betta-fish",
       name: "Betta Fish",
-      image: "../assets/fish/betta.jpg",
+      image: "https://splashyfishstore.com/cdn/shop/articles/beta-4701894_640.jpg?v=1695600858",
       scientificName: "Betta splendens",
       ph: 7,
       hardness: 5,
@@ -70,7 +68,7 @@ export interface FishProfile {
     {
       id: "zebra-danio",
       name: "Zebra Danio",
-      image: "../assets/fish/zebra-danio.jpg",
+      image: "https://www.aquariumcoop.com/cdn/shop/articles/zebra_danio.jpg?v=1697139307",
       scientificName: "Danio rerio",
       ph: 7,
       hardness: 8,
@@ -83,7 +81,7 @@ export interface FishProfile {
     {
       id: "corydoras-catfish",
       name: "Corydoras Catfish",
-      image: "../assets/fish/corydoras.jpg",
+      image: "https://cdn.shopify.com/s/files/1/0311/3149/files/corydoras_sterbai.jpg?v=1605035087",
       scientificName: "Corydoras aeneus",
       ph: 7,
       hardness: 6,
