@@ -11,7 +11,7 @@ import {
 // Simulate API delay
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-export const getDeviceLogs = async (token: string): Promise<DeviceLog[]> => {
+export const getDeviceLogs = async (): Promise<DeviceLog[]> => {
   await delay(800);
   
   try {
@@ -28,7 +28,7 @@ export const getDeviceLogs = async (token: string): Promise<DeviceLog[]> => {
   }
 };
 
-export const getLiveStatus = async (token: string): Promise<LiveStatus[]> => {
+export const getLiveStatus = async (): Promise<LiveStatus[]> => {
   await delay(600);
   
   try {
@@ -46,7 +46,7 @@ export const getLiveStatus = async (token: string): Promise<LiveStatus[]> => {
   }
 };
 
-export const getUserTanks = async (token: string): Promise<UserTank[]> => {
+export const getUserTanks = async (): Promise<UserTank[]> => {
   await delay(500);
   
   try {
@@ -93,7 +93,7 @@ export const createTank = async (token: string, tankData: { tankName: string }):
   }
 };
 
-export const getDeviceHistory = async (token: string, serialNumber: string): Promise<DeviceLog[]> => {
+export const getDeviceHistory = async (serialNumber: string): Promise<DeviceLog[]> => {
   await delay(700);
   
   try {
@@ -120,7 +120,7 @@ export const getDeviceHistory = async (token: string, serialNumber: string): Pro
   }
 };
 
-export const getTankLogs = async (tankId: number, _token: string): Promise<DeviceLog[]> => {
+export const getTankLogs = async (tankId: number): Promise<DeviceLog[]> => {
   await delay(600);
   
   try {
