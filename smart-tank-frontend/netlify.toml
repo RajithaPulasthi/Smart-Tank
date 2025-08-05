@@ -10,6 +10,18 @@
   to = "/index.html"
   status = 200
 
+# Handle API routes that don't exist (404s) - redirect to index for SPA
+[[redirects]]
+  from = "/api/*"
+  to = "/index.html"
+  status = 200
+
+# Handle asset 404s gracefully
+[[redirects]]
+  from = "/assets/*"
+  to = "/assets/:splat"
+  status = 200
+
 [[headers]]
   for = "/*"
   [headers.values]

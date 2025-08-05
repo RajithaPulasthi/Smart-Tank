@@ -63,6 +63,12 @@ const LocationPicker: React.FC<LocationPickerProps> = ({
       return;
     }
 
+    // Don't load Google Maps if no API key
+    if (!apiKey || apiKey === 'YOUR_API_KEY') {
+      console.warn('Google Maps API key not provided - location picker disabled');
+      return;
+    }
+
     const script = document.createElement("script");
     script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places&loading=async&callback=initMap`;
     script.async = true;
@@ -76,6 +82,11 @@ const LocationPicker: React.FC<LocationPickerProps> = ({
 
     script.onload = () => {
       console.log("Google Maps script loaded");
+    };
+
+    script.onerror = () => {
+      console.error("Failed to load Google Maps API");
+      setIsScriptLoaded(false);
     };
 
     script.onerror = (error) => {
