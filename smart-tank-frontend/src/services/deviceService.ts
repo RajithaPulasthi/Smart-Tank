@@ -54,7 +54,7 @@ export const getTankLogs = async (tankId: number, token: string): Promise<Device
   return response.json();
 };
 
-export const getLiveStatus = async (tankId: number, token: string): Promise<LiveStatus> => {
+export const getLiveStatus = async (tankId: number, token: string): Promise<LiveStatus | null> => {
   console.log(`Fetching live status for tank ${tankId}`); // Debug log
   const response = await fetch(`${API_URL}/live-statuses/${tankId}`, {
     headers: {
@@ -65,17 +65,15 @@ export const getLiveStatus = async (tankId: number, token: string): Promise<Live
   console.log(`Response status: ${response.status}, ok: ${response.ok}`); // Debug log
 
   if (!response.ok) {
-    console.log('Response not ok, returning mock data'); // Debug log
-    // Return mock data since device is not available
-    return {
-      "id": null,
-      "serialNumber": "tank_001",
-      "status": "online",
-      "temperature": "1.72",
-      "ph": "0.00",
-      "uptime": 733,
-      "lastSeen": "2025-07-25T17:13:50.703Z"
-    };
+    const errorText = await response.text();
+    console.log('Response error text:', errorText); // Debug log
+    
+    // Check if the error message indicates no active devices
+    if (errorText.includes("No active devices or live data found for this tank")) {
+      return null; // Return null to indicate no device assigned
+    }
+    
+    throw new Error('Failed to fetch live status');
   }
   
   const data = await response.json();

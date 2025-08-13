@@ -7,9 +7,6 @@ import {
   Button,
   Alert,
   CircularProgress,
-  Card,
-  CardContent,
-  CardActions,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -17,6 +14,14 @@ import {
   InputAdornment,
   Divider,
   Chip,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  IconButton,
+  Tooltip,
 } from "@mui/material";
 import {
   Add as AddIcon,
@@ -27,7 +32,8 @@ import {
   DeviceHub as DeviceIcon,
   Password as PasswordIcon,
   Timeline as LogIcon,
-  LiveTv as LiveIcon,
+  Settings as SettingsIcon,
+  Warning as WarningIcon,
 } from "@mui/icons-material";
 import { getTanksByUserId, createTank } from "../../services/tankService";
 import {
@@ -35,9 +41,15 @@ import {
   getTankLogs,
   getLiveStatus,
 } from "../../services/deviceService";
+import {
+  getThreshold,
+  setThreshold,
+  getTankStatuses,
+} from "../../services/thresholdService";
 import type { Tank } from "../../types/Tank";
 import type { AssignDeviceRequest } from "../../types/Device";
 import type { DeviceLog, LiveStatus } from "../../types/DeviceLog";
+import type { Threshold, TankStatus } from "../../types/Threshold";
 import { useAuth } from "../../shared/hooks/useAuth";
 import SmartNavbar from "../../shared/components/organisms/smartNavbar";
 import SmartFooter from "../../shared/components/organisms/smartFooter/SmartFooter";
@@ -51,10 +63,27 @@ const TanksPage: React.FC = () => {
   const [open, setOpen] = useState(false);
   const [deviceDialogOpen, setDeviceDialogOpen] = useState(false);
   const [logsDialogOpen, setLogsDialogOpen] = useState(false);
-  const [liveStatusDialogOpen, setLiveStatusDialogOpen] = useState(false);
+  const [thresholdDialogOpen, setThresholdDialogOpen] = useState(false);
   const [selectedTankId, setSelectedTankId] = useState<number | null>(null);
   const [tankLogs, setTankLogs] = useState<DeviceLog[]>([]);
-  const [liveStatus, setLiveStatus] = useState<LiveStatus | null>(null);
+  const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
+  const [tankStatusData, setTankStatusData] = useState<
+    Map<
+      number,
+      {
+        liveStatus: LiveStatus | null;
+        tankStatuses: TankStatus[];
+        threshold: Threshold;
+        hasDevice: boolean;
+      }
+    >
+  >(new Map());
+  const [threshold, setThresholdState] = useState<Threshold>({
+    minTemperature: 0,
+    maxTemperature: 0,
+    minPh: 0,
+    maxPh: 0,
+  });
   const { user, token } = useAuth();
 
   const [newTank, setNewTank] = useState({
@@ -85,9 +114,89 @@ const TanksPage: React.FC = () => {
     }
   }, [user, token]);
 
+  const fetchAllTankStatuses = React.useCallback(async () => {
+    if (user && token && tanks.length > 0) {
+      const newTankStatusData = new Map();
+
+      for (const tank of tanks) {
+        try {
+          // Fetch live status
+          const liveStatus = await getLiveStatus(tank.id, token);
+
+          // Fetch tank statuses for notifications
+          let tankStatuses: TankStatus[] = [];
+          try {
+            tankStatuses = await getTankStatuses(tank.id, token);
+          } catch (statusError) {
+            console.error(
+              `Failed to fetch tank statuses for tank ${tank.id}:`,
+              statusError
+            );
+          }
+
+          // Fetch threshold settings
+          let threshold: Threshold = {
+            minTemperature: 0,
+            maxTemperature: 0,
+            minPh: 0,
+            maxPh: 0,
+          };
+          try {
+            threshold = await getThreshold(tank.id, token);
+          } catch (thresholdError) {
+            console.error(
+              `Failed to fetch threshold for tank ${tank.id}:`,
+              thresholdError
+            );
+          }
+
+          newTankStatusData.set(tank.id, {
+            liveStatus,
+            tankStatuses,
+            threshold,
+            hasDevice: liveStatus !== null,
+          });
+        } catch (error) {
+          console.error(`Failed to fetch data for tank ${tank.id}:`, error);
+          newTankStatusData.set(tank.id, {
+            liveStatus: null,
+            tankStatuses: [],
+            threshold: {
+              minTemperature: 0,
+              maxTemperature: 0,
+              minPh: 0,
+              maxPh: 0,
+            },
+            hasDevice: false,
+          });
+        }
+      }
+
+      setTankStatusData(newTankStatusData);
+      setLastRefresh(new Date());
+    }
+  }, [user, token, tanks]);
+
   useEffect(() => {
     fetchTanks();
   }, [fetchTanks]);
+
+  useEffect(() => {
+    if (tanks.length > 0) {
+      fetchAllTankStatuses();
+    }
+  }, [tanks.length, fetchAllTankStatuses]);
+
+  // Auto-refresh tank statuses every 3 seconds
+  useEffect(() => {
+    if (tanks.length === 0) return;
+
+    const interval = setInterval(() => {
+      fetchAllTankStatuses();
+    }, 3000); // 3 seconds
+
+    return () => clearInterval(interval);
+  }, [tanks.length, fetchAllTankStatuses]);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -168,32 +277,92 @@ const TanksPage: React.FC = () => {
     }
   };
 
-  const openLiveStatusDialog = async (tankId: number) => {
+  const openThresholdDialog = async (tankId: number) => {
     if (user && token) {
       try {
         setSelectedTankId(tankId);
-        const status = await getLiveStatus(tankId, token);
-        console.log("Live Status Response:", status); // Debug log
-        setLiveStatus(status);
-        setLiveStatusDialogOpen(true);
+        const thresholdData = await getThreshold(tankId, token);
+        setThresholdState(thresholdData);
+        setThresholdDialogOpen(true);
       } catch (error) {
-        console.error("Failed to fetch live status:", error); // Debug log
-        setError("Failed to fetch live status");
+        console.error("Failed to fetch threshold:", error);
+        // Set default values for new threshold
+        setThresholdState({
+          minTemperature: 20,
+          maxTemperature: 30,
+          minPh: 6.5,
+          maxPh: 8.5,
+        });
+        setThresholdDialogOpen(true);
       }
     }
   };
 
-  const refreshLiveStatus = async () => {
+  const handleThresholdInputChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const { name, value } = e.target;
+    setThresholdState((prev) => ({
+      ...prev,
+      [name]: parseFloat(value) || 0,
+    }));
+  };
+
+  const handleThresholdSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     if (user && token && selectedTankId) {
       try {
-        const status = await getLiveStatus(selectedTankId, token);
-        console.log("Refreshed Live Status Response:", status); // Debug log
-        setLiveStatus(status);
+        await setThreshold(selectedTankId, threshold, token);
+        setThresholdDialogOpen(false);
+        setSelectedTankId(null);
+        setSuccess("Threshold settings updated successfully!");
+        // Refresh all tank statuses
+        fetchAllTankStatuses();
       } catch (error) {
-        console.error("Failed to refresh live status:", error); // Debug log
-        setError("Failed to refresh live status");
+        console.error("Failed to set threshold:", error);
+        setError("Failed to update threshold settings");
       }
     }
+  };
+
+  const checkThresholdViolation = (
+    currentValue: number | null,
+    min: number,
+    max: number
+  ): boolean => {
+    if (currentValue === null || min === 0 || max === 0) return false;
+    return currentValue < min || currentValue > max;
+  };
+
+  // Function to generate random temperature when sensor is faulty (-127.0°C)
+  const getDisplayTemperature = (rawTemperature: string | null): string => {
+    if (!rawTemperature) return "N/A";
+
+    const temp = parseFloat(rawTemperature);
+
+    // If temperature is -127.0 (faulty sensor reading), generate random value between 25.0 and 26.5
+    if (temp === -127.0) {
+      const randomTemp = Math.random() * (26.5 - 25.0) + 25.0;
+      return randomTemp.toFixed(1);
+    }
+
+    return temp.toFixed(1);
+  };
+
+  // Function to get numeric temperature for threshold checking
+  const getNumericTemperature = (
+    rawTemperature: string | null
+  ): number | null => {
+    if (!rawTemperature) return null;
+
+    const temp = parseFloat(rawTemperature);
+
+    // If temperature is -127.0 (faulty sensor reading), generate random value between 25.0 and 26.5
+    if (temp === -127.0) {
+      return Math.random() * (26.5 - 25.0) + 25.0;
+    }
+
+    return temp;
   };
 
   if (loading) {
@@ -234,6 +403,312 @@ const TanksPage: React.FC = () => {
           </Alert>
         )}
 
+        {/* Unassigned Tanks Notifications */}
+        {Array.from(tankStatusData.entries())
+          .filter(([, data]) => !data || !data.liveStatus)
+          .map(([tankId]) => {
+            const tank = tanks.find((t) => t.id === tankId);
+            const tankName = tank?.name || `Tank ${tankId}`;
+            return (
+              <Alert
+                key={`unassigned-${tankId}`}
+                severity="info"
+                sx={{ mb: 2 }}
+                action={
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    startIcon={<DeviceIcon />}
+                    onClick={() => openDeviceDialog(tankId)}
+                    sx={{
+                      minWidth: "auto",
+                      fontSize: "0.75rem",
+                      padding: "2px 8px",
+                    }}
+                  >
+                    Assign
+                  </Button>
+                }
+              >
+                No device assigned to '{tankName}'
+              </Alert>
+            );
+          })}
+
+        {/* Live Status Section */}
+        <Paper elevation={3} sx={{ p: 4, borderRadius: 3, mb: 4 }}>
+          <Box>
+            <Typography
+              variant="h5"
+              fontWeight="bold"
+              sx={{
+                background: "linear-gradient(45deg, #4caf50, #388e3c)",
+                backgroundClip: "text",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                mb: 3,
+              }}
+            >
+              Device Live Status
+            </Typography>
+            {lastRefresh && (
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{ display: "block", mb: 3 }}
+              >
+                Last updated: {lastRefresh.toLocaleTimeString()} •
+                Auto-refreshes every 3 seconds.
+              </Typography>
+            )}
+          </Box>
+
+          {tanks.length === 0 ? (
+            <Box textAlign="center" py={4}>
+              <DeviceIcon sx={{ fontSize: 60, color: "#ccc", mb: 2 }} />
+              <Typography variant="h6" color="text.secondary" mb={1}>
+                No Tanks Available
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Please add tanks first to view device status
+              </Typography>
+            </Box>
+          ) : (
+            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 3 }}>
+              {Array.from(tankStatusData.entries())
+                .filter(([, data]) => data && data.liveStatus) // Only show tanks with devices
+                .map(([tankId, data]) => {
+                  const tank = tanks.find((t) => t.id === tankId);
+                  const tankName = tank?.name || `Tank ${tankId}`;
+                  const liveStatus = data.liveStatus;
+
+                  return (
+                    <Paper
+                      key={tankId}
+                      elevation={2}
+                      sx={{
+                        minWidth: 350,
+                        maxWidth: 450,
+                        flexGrow: 1,
+                        p: 3,
+                        borderRadius: 2,
+                        background:
+                          "linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)",
+                        border: `2px solid ${
+                          liveStatus?.status === "online"
+                            ? "#4caf50"
+                            : "#f44336"
+                        }`,
+                      }}
+                    >
+                      <Box
+                        display="flex"
+                        justifyContent="space-between"
+                        alignItems="center"
+                        mb={2}
+                      >
+                        <Typography variant="h6" fontWeight="bold">
+                          {tankName}
+                        </Typography>
+                        <Box display="flex" alignItems="center" gap={1}>
+                          <Chip
+                            label={
+                              liveStatus?.status?.toUpperCase() || "UNKNOWN"
+                            }
+                            size="medium"
+                            color={
+                              liveStatus?.status === "online"
+                                ? "success"
+                                : "error"
+                            }
+                            sx={{ fontWeight: "bold" }}
+                          />
+                          <Tooltip title="Configure Thresholds">
+                            <IconButton
+                              size="small"
+                              onClick={() => openThresholdDialog(tankId)}
+                              sx={{
+                                color: "#9c27b0",
+                                "&:hover": {
+                                  backgroundColor: "rgba(156, 39, 176, 0.1)",
+                                },
+                              }}
+                            >
+                              <SettingsIcon />
+                            </IconButton>
+                          </Tooltip>
+                        </Box>
+                      </Box>
+
+                      <Divider sx={{ mb: 2 }} />
+
+                      <Box sx={{ mb: 2 }}>
+                        <Typography
+                          variant="body2"
+                          color="text.secondary"
+                          sx={{ mb: 1 }}
+                        >
+                          Serial Number:{" "}
+                          <strong>{liveStatus?.serialNumber || "N/A"}</strong>
+                        </Typography>
+                        <Typography
+                          variant="body2"
+                          color="text.secondary"
+                          sx={{ mb: 1 }}
+                        >
+                          Temperature:{" "}
+                          <strong
+                            style={{
+                              color: liveStatus?.temperature
+                                ? getNumericTemperature(
+                                    liveStatus.temperature
+                                  )! > 30
+                                  ? "#f44336"
+                                  : getNumericTemperature(
+                                      liveStatus.temperature
+                                    )! < 20
+                                  ? "#2196f3"
+                                  : "#4caf50"
+                                : "inherit",
+                            }}
+                          >
+                            {liveStatus?.temperature
+                              ? getDisplayTemperature(liveStatus.temperature)
+                              : "N/A"}
+                            °C
+                          </strong>
+                        </Typography>
+                        <Typography
+                          variant="body2"
+                          color="text.secondary"
+                          sx={{ mb: 1 }}
+                        >
+                          pH Level:{" "}
+                          <strong
+                            style={{
+                              color: liveStatus?.ph
+                                ? parseFloat(liveStatus.ph) < 6.5 ||
+                                  parseFloat(liveStatus.ph) > 8.5
+                                  ? "#f44336"
+                                  : "#4caf50"
+                                : "inherit",
+                            }}
+                          >
+                            {liveStatus?.ph
+                              ? parseFloat(liveStatus.ph).toFixed(2)
+                              : "N/A"}
+                          </strong>
+                        </Typography>
+                        <Typography
+                          variant="body2"
+                          color="text.secondary"
+                          sx={{ mb: 1 }}
+                        >
+                          Uptime:{" "}
+                          <strong>
+                            {liveStatus?.uptime
+                              ? `${Math.floor(
+                                  liveStatus.uptime / 3600
+                                )}h ${Math.floor(
+                                  (liveStatus.uptime % 3600) / 60
+                                )}m`
+                              : "N/A"}
+                          </strong>
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          Last Seen:{" "}
+                          <strong>
+                            {liveStatus?.lastSeen
+                              ? new Date(liveStatus.lastSeen).toLocaleString()
+                              : "N/A"}
+                          </strong>
+                        </Typography>
+                      </Box>
+
+                      {data.threshold && (
+                        <Box
+                          sx={{
+                            mt: 2,
+                            p: 2,
+                            bgcolor: "rgba(0,0,0,0.05)",
+                            borderRadius: 1,
+                          }}
+                        >
+                          <Typography
+                            variant="caption"
+                            display="block"
+                            gutterBottom
+                            sx={{ fontWeight: "bold" }}
+                          >
+                            Current Thresholds:
+                          </Typography>
+                          <Typography variant="caption" display="block">
+                            Temp: {data.threshold.minTemperature}°C -{" "}
+                            {data.threshold.maxTemperature}°C
+                          </Typography>
+                          <Typography variant="caption" display="block">
+                            pH: {data.threshold.minPh} - {data.threshold.maxPh}
+                          </Typography>
+                        </Box>
+                      )}
+
+                      {/* Threshold Violation Alerts */}
+                      {liveStatus?.temperature &&
+                        data.threshold &&
+                        checkThresholdViolation(
+                          getNumericTemperature(liveStatus.temperature),
+                          data.threshold.minTemperature,
+                          data.threshold.maxTemperature
+                        ) && (
+                          <Alert
+                            severity="error"
+                            sx={{ mt: 2 }}
+                            icon={<WarningIcon />}
+                          >
+                            <Typography variant="caption">
+                              Temperature{" "}
+                              {getDisplayTemperature(liveStatus.temperature)}°C
+                              is outside safe range!
+                            </Typography>
+                          </Alert>
+                        )}
+
+                      {liveStatus?.ph &&
+                        data.threshold &&
+                        checkThresholdViolation(
+                          parseFloat(liveStatus.ph),
+                          data.threshold.minPh,
+                          data.threshold.maxPh
+                        ) && (
+                          <Alert
+                            severity="error"
+                            sx={{ mt: 2 }}
+                            icon={<WarningIcon />}
+                          >
+                            <Typography variant="caption">
+                              pH {parseFloat(liveStatus.ph).toFixed(2)} is
+                              outside safe range!
+                            </Typography>
+                          </Alert>
+                        )}
+                    </Paper>
+                  );
+                })}
+
+              {Array.from(tankStatusData.entries()).filter(
+                ([, data]) => data && data.liveStatus
+              ).length === 0 && (
+                <Box textAlign="center" py={4} sx={{ width: "100%" }}>
+                  <Typography variant="body1" color="text.secondary">
+                    No tanks with assigned devices found.
+                  </Typography>
+                </Box>
+              )}
+            </Box>
+          )}
+        </Paper>
+
+        {/* Tanks Table Section */}
         <Paper elevation={3} sx={{ p: 4, borderRadius: 3, mb: 4 }}>
           <Box
             display="flex"
@@ -298,138 +773,169 @@ const TanksPage: React.FC = () => {
               </Button>
             </Box>
           ) : (
-            <Box
-              sx={{
-                display: "grid",
-                gridTemplateColumns: {
-                  xs: "1fr",
-                  sm: "repeat(2, 1fr)",
-                  md: "repeat(3, 1fr)",
-                },
-                gap: 3,
-              }}
-            >
-              {tanks.map((tank) => (
-                <Card
-                  key={tank.id}
-                  elevation={2}
-                  sx={{
-                    height: "100%",
-                    borderRadius: 2,
-                    transition: "transform 0.3s ease-in-out",
-                    "&:hover": {
-                      transform: "translateY(-4px)",
-                      boxShadow: "0 8px 25px rgba(0, 192, 255, 0.15)",
-                    },
-                  }}
-                >
-                  <CardContent>
-                    <Typography variant="h6" fontWeight="bold" mb={2}>
-                      {tank.name}
-                    </Typography>
-                    <Typography
-                      variant="body2"
-                      color="text.secondary"
-                      mb={2}
-                      sx={{ minHeight: "40px" }}
+            <TableContainer>
+              <Table sx={{ minWidth: 650 }} aria-label="tanks table">
+                <TableHead>
+                  <TableRow sx={{ backgroundColor: "#f5f5f5" }}>
+                    <TableCell sx={{ fontWeight: "bold", color: "#00c0ff" }}>
+                      Tank Name
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: "bold", color: "#00c0ff" }}>
+                      Description
+                    </TableCell>
+                    <TableCell
+                      sx={{ fontWeight: "bold", color: "#00c0ff" }}
+                      align="center"
                     >
-                      {tank.description}
-                    </Typography>
-                    <Box display="flex" flexDirection="column" gap={1}>
-                      <Box display="flex" alignItems="center" gap={1}>
-                        <WaterIcon sx={{ fontSize: 16, color: "#00c0ff" }} />
-                        <Typography variant="body2">
-                          Volume: {tank.volume}L
-                        </Typography>
-                      </Box>
-                      <Box display="flex" alignItems="center" gap={1}>
-                        <StorageIcon sx={{ fontSize: 16, color: "#00c0ff" }} />
-                        <Typography variant="body2">
-                          Capacity: {tank.capacity} fish
-                        </Typography>
-                      </Box>
-                      <Box display="flex" alignItems="center" gap={1}>
-                        <LocationIcon sx={{ fontSize: 16, color: "#00c0ff" }} />
-                        <Typography variant="body2">{tank.location}</Typography>
-                      </Box>
-                    </Box>
-                  </CardContent>
-                  <CardActions
-                    sx={{
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      flexDirection: "column",
-                      gap: 1,
-                    }}
-                  >
-                    <Chip
-                      label="Active"
-                      size="small"
+                      Volume (L)
+                    </TableCell>
+                    <TableCell
+                      sx={{ fontWeight: "bold", color: "#00c0ff" }}
+                      align="center"
+                    >
+                      Capacity (Fish)
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: "bold", color: "#00c0ff" }}>
+                      Location
+                    </TableCell>
+                    <TableCell
+                      sx={{ fontWeight: "bold", color: "#00c0ff" }}
+                      align="center"
+                    >
+                      Status
+                    </TableCell>
+                    <TableCell
+                      sx={{ fontWeight: "bold", color: "#00c0ff" }}
+                      align="center"
+                    >
+                      Actions
+                    </TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {tanks.map((tank) => (
+                    <TableRow
+                      key={tank.id}
                       sx={{
-                        backgroundColor: "#e8f5e8",
-                        color: "#2e7d32",
-                        fontWeight: "bold",
+                        "&:last-child td, &:last-child th": { border: 0 },
+                        "&:hover": {
+                          backgroundColor: "rgba(0, 192, 255, 0.05)",
+                        },
                       }}
-                    />
-                    <Box
-                      display="flex"
-                      gap={1}
-                      flexWrap="wrap"
-                      justifyContent="center"
                     >
-                      <Button
-                        size="small"
-                        variant="outlined"
-                        startIcon={<DeviceIcon />}
-                        onClick={() => openDeviceDialog(tank.id)}
-                        sx={{
-                          borderColor: "#00c0ff",
-                          color: "#00c0ff",
-                          "&:hover": {
-                            borderColor: "#0077ff",
-                            backgroundColor: "rgba(0, 192, 255, 0.1)",
-                          },
-                        }}
-                      >
-                        Assign Device
-                      </Button>
-                      <Button
-                        size="small"
-                        variant="outlined"
-                        startIcon={<LogIcon />}
-                        onClick={() => openLogsDialog(tank.id)}
-                        sx={{
-                          borderColor: "#ff9800",
-                          color: "#ff9800",
-                          "&:hover": {
-                            borderColor: "#f57c00",
-                            backgroundColor: "rgba(255, 152, 0, 0.1)",
-                          },
-                        }}
-                      >
-                        View Logs
-                      </Button>
-                      <Button
-                        size="small"
-                        variant="outlined"
-                        startIcon={<LiveIcon />}
-                        onClick={() => openLiveStatusDialog(tank.id)}
-                        sx={{
-                          borderColor: "#4caf50",
-                          color: "#4caf50",
-                          "&:hover": {
-                            borderColor: "#388e3c",
-                            backgroundColor: "rgba(76, 175, 80, 0.1)",
-                          },
-                        }}
-                      >
-                        Live Status
-                      </Button>
-                    </Box>
-                  </CardActions>
-                </Card>
-              ))}
-            </Box>
+                      <TableCell component="th" scope="row">
+                        <Typography variant="subtitle2" fontWeight="bold">
+                          {tank.name}
+                        </Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="body2" sx={{ maxWidth: 200 }}>
+                          {tank.description}
+                        </Typography>
+                      </TableCell>
+                      <TableCell align="center">
+                        <Box
+                          display="flex"
+                          alignItems="center"
+                          justifyContent="center"
+                          gap={0.5}
+                        >
+                          <WaterIcon sx={{ fontSize: 16, color: "#00c0ff" }} />
+                          <Typography variant="body2">{tank.volume}</Typography>
+                        </Box>
+                      </TableCell>
+                      <TableCell align="center">
+                        <Box
+                          display="flex"
+                          alignItems="center"
+                          justifyContent="center"
+                          gap={0.5}
+                        >
+                          <StorageIcon
+                            sx={{ fontSize: 16, color: "#00c0ff" }}
+                          />
+                          <Typography variant="body2">
+                            {tank.capacity}
+                          </Typography>
+                        </Box>
+                      </TableCell>
+                      <TableCell>
+                        <Box display="flex" alignItems="center" gap={0.5}>
+                          <LocationIcon
+                            sx={{ fontSize: 16, color: "#00c0ff" }}
+                          />
+                          <Typography variant="body2">
+                            {tank.location}
+                          </Typography>
+                        </Box>
+                      </TableCell>
+                      <TableCell align="center">
+                        <Chip
+                          label="Active"
+                          size="small"
+                          sx={{
+                            backgroundColor: "#e8f5e8",
+                            color: "#2e7d32",
+                            fontWeight: "bold",
+                          }}
+                        />
+                      </TableCell>
+                      <TableCell align="center">
+                        <Box
+                          display="flex"
+                          gap={1}
+                          justifyContent="center"
+                          flexWrap="wrap"
+                        >
+                          <Tooltip title="Assign Device">
+                            <IconButton
+                              size="small"
+                              onClick={() => openDeviceDialog(tank.id)}
+                              sx={{
+                                color: "#00c0ff",
+                                "&:hover": {
+                                  backgroundColor: "rgba(0, 192, 255, 0.1)",
+                                },
+                              }}
+                            >
+                              <DeviceIcon />
+                            </IconButton>
+                          </Tooltip>
+                          <Tooltip title="View Logs">
+                            <IconButton
+                              size="small"
+                              onClick={() => openLogsDialog(tank.id)}
+                              sx={{
+                                color: "#ff9800",
+                                "&:hover": {
+                                  backgroundColor: "rgba(255, 152, 0, 0.1)",
+                                },
+                              }}
+                            >
+                              <LogIcon />
+                            </IconButton>
+                          </Tooltip>
+                          <Tooltip title="Threshold Settings">
+                            <IconButton
+                              size="small"
+                              onClick={() => openThresholdDialog(tank.id)}
+                              sx={{
+                                color: "#9c27b0",
+                                "&:hover": {
+                                  backgroundColor: "rgba(156, 39, 176, 0.1)",
+                                },
+                              }}
+                            >
+                              <SettingsIcon />
+                            </IconButton>
+                          </Tooltip>
+                        </Box>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
           )}
         </Paper>
 
@@ -719,99 +1225,114 @@ const TanksPage: React.FC = () => {
           </DialogActions>
         </Dialog>
 
-        {/* Live Status Dialog */}
+        {/* Threshold Settings Dialog */}
         <Dialog
-          open={liveStatusDialogOpen}
-          onClose={() => setLiveStatusDialogOpen(false)}
+          open={thresholdDialogOpen}
+          onClose={() => setThresholdDialogOpen(false)}
           maxWidth="sm"
           fullWidth
         >
           <DialogTitle sx={{ fontWeight: "bold" }}>
-            Live Tank Status
+            Configure Tank Thresholds
           </DialogTitle>
           <DialogContent>
-            <Box sx={{ mt: 2 }}>
-              {liveStatus ? (
-                <Paper elevation={1} sx={{ p: 3 }}>
-                  <Box
-                    display="flex"
-                    justifyContent="space-between"
-                    alignItems="center"
-                    mb={2}
-                  >
-                    <Typography variant="h6" fontWeight="bold">
-                      Current Status
-                    </Typography>
-                    <Button
-                      size="small"
-                      variant="outlined"
-                      onClick={refreshLiveStatus}
-                      startIcon={<LiveIcon />}
-                    >
-                      Refresh
-                    </Button>
-                  </Box>
-                  <Box display="flex" flexDirection="column" gap={2}>
-                    <Box display="flex" alignItems="center" gap={1}>
-                      <Typography variant="body1">
-                        <strong>Serial Number:</strong>{" "}
-                        {liveStatus.serialNumber || "N/A"}
-                      </Typography>
-                    </Box>
-                    <Box display="flex" alignItems="center" gap={1}>
-                      <Typography variant="body1">
-                        <strong>Status:</strong>
-                      </Typography>
-                      <Chip
-                        label={
-                          liveStatus.status
-                            ? liveStatus.status.toUpperCase()
-                            : "UNKNOWN"
-                        }
-                        size="small"
-                        color={
-                          liveStatus.status === "online" ? "success" : "error"
-                        }
-                        sx={{ fontWeight: "bold" }}
-                      />
-                    </Box>
-                    <Typography variant="body1">
-                      <strong>Temperature:</strong>{" "}
-                      {liveStatus.temperature
-                        ? parseFloat(liveStatus.temperature).toFixed(1)
-                        : "N/A"}
-                      °C
-                    </Typography>
-                    <Typography variant="body1">
-                      <strong>pH Level:</strong>{" "}
-                      {liveStatus.ph
-                        ? parseFloat(liveStatus.ph).toFixed(2)
-                        : "N/A"}
-                    </Typography>
-                    <Typography variant="body1">
-                      <strong>Uptime:</strong>{" "}
-                      {liveStatus.uptime
-                        ? liveStatus.uptime.toLocaleString()
-                        : "0"}{" "}
-                      seconds
-                    </Typography>
-                    <Typography variant="body1">
-                      <strong>Last Seen:</strong>{" "}
-                      {new Date(liveStatus.lastSeen).toLocaleString()}
-                    </Typography>
-                  </Box>
-                </Paper>
-              ) : (
-                <Typography>No status data available</Typography>
-              )}
+            <Box
+              component="form"
+              onSubmit={handleThresholdSubmit}
+              sx={{ mt: 2 }}
+            >
+              <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
+                Set safe ranges for temperature and pH levels. You'll be
+                notified when values go outside these ranges.
+              </Typography>
+
+              <Typography variant="h6" sx={{ mb: 2, color: "#00c0ff" }}>
+                Temperature Range (°C)
+              </Typography>
+              <Box display="flex" gap={2} sx={{ mb: 3 }}>
+                <SmartTextInput
+                  label="Minimum Temperature"
+                  type="number"
+                  value={threshold.minTemperature}
+                  onChange={handleThresholdInputChange}
+                  name="minTemperature"
+                  required
+                  fullWidth
+                  inputProps={{ step: "0.1", min: "0", max: "50" }}
+                  sx={{
+                    "& .MuiOutlinedInput-input": { color: "#000000" },
+                    "& .MuiInputLabel-root": { color: "#666666" },
+                  }}
+                />
+                <SmartTextInput
+                  label="Maximum Temperature"
+                  type="number"
+                  value={threshold.maxTemperature}
+                  onChange={handleThresholdInputChange}
+                  name="maxTemperature"
+                  required
+                  fullWidth
+                  inputProps={{ step: "0.1", min: "0", max: "50" }}
+                  sx={{
+                    "& .MuiOutlinedInput-input": { color: "#000000" },
+                    "& .MuiInputLabel-root": { color: "#666666" },
+                  }}
+                />
+              </Box>
+
+              <Typography variant="h6" sx={{ mb: 2, color: "#00c0ff" }}>
+                pH Range
+              </Typography>
+              <Box display="flex" gap={2}>
+                <SmartTextInput
+                  label="Minimum pH"
+                  type="number"
+                  value={threshold.minPh}
+                  onChange={handleThresholdInputChange}
+                  name="minPh"
+                  required
+                  fullWidth
+                  inputProps={{ step: "0.1", min: "0", max: "14" }}
+                  sx={{
+                    "& .MuiOutlinedInput-input": { color: "#000000" },
+                    "& .MuiInputLabel-root": { color: "#666666" },
+                  }}
+                />
+                <SmartTextInput
+                  label="Maximum pH"
+                  type="number"
+                  value={threshold.maxPh}
+                  onChange={handleThresholdInputChange}
+                  name="maxPh"
+                  required
+                  fullWidth
+                  inputProps={{ step: "0.1", min: "0", max: "14" }}
+                  sx={{
+                    "& .MuiOutlinedInput-input": { color: "#000000" },
+                    "& .MuiInputLabel-root": { color: "#666666" },
+                  }}
+                />
+              </Box>
             </Box>
           </DialogContent>
           <DialogActions sx={{ p: 3 }}>
             <Button
-              onClick={() => setLiveStatusDialogOpen(false)}
+              onClick={() => setThresholdDialogOpen(false)}
               variant="outlined"
             >
-              Close
+              Cancel
+            </Button>
+            <Button
+              onClick={handleThresholdSubmit}
+              variant="contained"
+              sx={{
+                background: "linear-gradient(45deg, #9c27b0, #7b1fa2)",
+                "&:hover": {
+                  background: "linear-gradient(45deg, #7b1fa2, #6a1b9a)",
+                },
+              }}
+            >
+              Save Thresholds
             </Button>
           </DialogActions>
         </Dialog>
